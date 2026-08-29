@@ -14,5 +14,8 @@ int world_runtime_room_remaining(const MokoWorldRuntime *w,int room);
 int world_runtime_room_clear_reward(MokoWorldRuntime *w,int room);
 int world_runtime_take_combat_reward(MokoWorldRuntime *w);
 int world_runtime_defeats(const MokoWorldRuntime *w);
+int world_runtime_boss_active(const MokoWorldRuntime *w);
+int world_runtime_boss_hp(const MokoWorldRuntime *w);
+int world_runtime_boss_max_hp(const MokoWorldRuntime *w);
 const MokoNpcDef *world_runtime_npc(const MokoWorldRuntime *w);
 #endif
