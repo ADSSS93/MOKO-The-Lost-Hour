@@ -8,39 +8,43 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y git build-essential cmake ninja-build python3 wget xz-utils
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build curl unzip
 
-      - name: Install PSn00bSDK toolchain
+      - name: Install prebuilt PSn00bSDK
         run: |
-          git clone --depth 1 https://github.com/alex-free/psn00bsdk-builder.git /tmp/psn00b-builder
-          cd /tmp/psn00b-builder
-          sudo ./build
+          mkdir -p /tmp/psn00b-release /opt/psn00bsdk
+          curl -fL --retry 4 --retry-delay 3 \
+            https://github.com/Lameguy64/PSn00bSDK/releases/download/v0.24/PSn00bSDK-0.24-Linux.zip \
+            -o /tmp/psn00bsdk.zip
+          unzip -q /tmp/psn00bsdk.zip -d /tmp/psn00b-release
+          SDK_DIR=$(find /tmp/psn00b-release -maxdepth 1 -type d -name 'PSn00bSDK-*-Linux' | head -1)
+          test -n "$SDK_DIR"
+          cp -a "$SDK_DIR"/. /opt/psn00bsdk/
+          echo "/opt/psn00bsdk/bin" >> "$GITHUB_PATH"
+          echo "PSN00BSDK_LIBS=/opt/psn00bsdk/lib/libpsn00b" >> "$GITHUB_ENV"
+          /opt/psn00bsdk/bin/mipsel-none-elf-gcc --version
+          /opt/psn00bsdk/bin/mkpsxiso --help >/dev/null || true
 
       - name: Configure MOKO
-        run: |
-          export PATH="/usr/local/psn00bsdk/bin:$PATH"
-          export PSN00BSDK_LIBS="/usr/local/psn00bsdk/lib/libpsn00b"
-          cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$PSN00BSDK_LIBS/cmake/sdk.cmake" -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$PSN00BSDK_LIBS/cmake/sdk.cmake" -DCMAKE_BUILD_TYPE=Release
 
       - name: Build MOKO BIN/CUE
-        run: |
-          export PATH="/usr/local/psn00bsdk/bin:$PATH"
-          export PSN00BSDK_LIBS="/usr/local/psn00bsdk/lib/libpsn00b"
-          cmake --build build
+        run: cmake --build build
 
       - name: Collect disc image
         run: |
           mkdir -p dist
-          BIN=$(find build -type f -iname '*.bin' | head -1)
-          CUE=$(find build -type f -iname '*.cue' | head -1)
+          BIN=$(find build -type f -iname 'MOKO.bin' | head -1)
+          CUE=$(find build -type f -iname 'MOKO.cue' | head -1)
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
+          ls -lh dist/MOKO.bin dist/MOKO.cue
 
       - uses: actions/upload-artifact@v4
         with:
