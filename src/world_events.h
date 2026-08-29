@@ -2,7 +2,7 @@
 #define MOKO_WORLD_EVENTS_H
 #include <stdint.h>
 #include "quests.h"
-#define MOKO_WORLD_EVENT_COUNT 72
+#define MOKO_WORLD_EVENT_COUNT 75
 typedef enum { WORLD_EVENT_PICKUP=0, WORLD_EVENT_INSPECT=1, WORLD_EVENT_SECRET=2 } MokoWorldEventKind;
 typedef struct { uint8_t collected[MOKO_WORLD_EVENT_COUNT]; uint8_t room_visits[5]; uint16_t interactions; } MokoWorldEvents;
 typedef struct { int room; int x; int y; int quest; int kind; int requires; const char *label; } MokoWorldEventDef;
