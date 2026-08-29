@@ -7,14 +7,14 @@ static TIM_IMAGE moko_image;
 static int moko_ready=0;
 
 void moko_sprite_init(void){
-    if(GetTimInfo((unsigned int *)moko_tim,&moko_image)!=0)return;
+    if(GetTimInfo((const uint32_t *)moko_tim,&moko_image)!=0)return;
     LoadImage(moko_image.prect,moko_image.paddr);
     if(moko_image.mode&0x8)LoadImage(moko_image.crect,moko_image.caddr);
     DrawSync(0);
     moko_ready=1;
 }
 
-void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_tick,unsigned int *ot,char **next_packet){
+void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_tick,uint32_t *ot,char **next_packet){
     SPRT *spr;
     DR_TPAGE *page;
     int moving=(walk_tick>0);
@@ -28,8 +28,6 @@ void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_t
     setWH(spr,16,24);
     setUV0(spr,frame*16,0);
     setRGB0(spr,128,128,128);
-    /* The first sheet is authored facing right. A later POLY_FT4 pass will
-       provide true UV mirroring; keep gameplay facing independent for now. */
     (void)facing;
     addPrim(ot,spr);
     *next_packet+=sizeof(SPRT);
