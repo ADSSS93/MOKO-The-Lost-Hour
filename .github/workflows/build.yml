@@ -4,33 +4,46 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y git build-essential cmake ninja-build python3 wget xz-utils
-      - name: Install PSn00bSDK builder
+
+      - name: Install PSn00bSDK toolchain
         run: |
           git clone --depth 1 https://github.com/alex-free/psn00bsdk-builder.git /tmp/psn00b-builder
           cd /tmp/psn00b-builder
-          sudo ./build.sh
-      - name: Configure
+          sudo ./build
+
+      - name: Configure MOKO
         run: |
-          source /usr/local/psn00bsdk/psn00b-env || true
-          cmake --preset default -B build
-      - name: Build BIN/CUE
+          export PATH="/usr/local/psn00bsdk/bin:$PATH"
+          export PSN00BSDK_LIBS="/usr/local/psn00bsdk/lib/libpsn00b"
+          cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$PSN00BSDK_LIBS/cmake/sdk.cmake" -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build MOKO BIN/CUE
         run: |
-          source /usr/local/psn00bsdk/psn00b-env || true
+          export PATH="/usr/local/psn00bsdk/bin:$PATH"
+          export PSN00BSDK_LIBS="/usr/local/psn00bsdk/lib/libpsn00b"
           cmake --build build
-      - name: Collect image
+
+      - name: Collect disc image
         run: |
-          find build -name 'MOKO.bin' -o -name 'MOKO.cue'
           mkdir -p dist
-          cp $(find build -name 'MOKO.bin' | head -1) dist/MOKO.bin
-          cp $(find build -name 'MOKO.cue' | head -1) dist/MOKO.cue
+          BIN=$(find build -type f -iname '*.bin' | head -1)
+          CUE=$(find build -type f -iname '*.cue' | head -1)
+          test -n "$BIN" && test -n "$CUE"
+          cp "$BIN" dist/MOKO.bin
+          cp "$CUE" dist/MOKO.cue
+
       - uses: actions/upload-artifact@v4
         with:
           name: MOKO-PS1
-          path: dist/*
+          path: dist/
+          if-no-files-found: error
