@@ -13,6 +13,7 @@ void adventure_dash(MokoAdventure *a);
 void adventure_story_progress(MokoAdventure *a,int quest,int amount);
 void adventure_story_clear(MokoAdventure *a,int quest);
 void adventure_challenge_zone(MokoAdventure *a,int room,int zone,int dashing);
+void adventure_challenge_position(MokoAdventure *a,int room,int px,int py,int dashing);
 int adventure_completion(const MokoAdventure *a);
 const char *adventure_notice(const MokoAdventure *a);
 int adventure_near_event(const MokoAdventure *a,int room,int px,int py,int radius);
