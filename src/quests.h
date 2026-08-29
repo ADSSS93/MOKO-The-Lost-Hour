@@ -1,7 +1,7 @@
 #ifndef MOKO_QUESTS_H
 #define MOKO_QUESTS_H
 #include <stdint.h>
-#define MOKO_QUEST_COUNT 48
+#define MOKO_QUEST_COUNT 53
 typedef enum { QUEST_LOCKED=0, QUEST_ACTIVE=1, QUEST_CLEAR=2 } MokoQuestState;
 typedef enum { QUEST_MAIN=0, QUEST_SIDE=1, QUEST_SECRET=2 } MokoQuestKind;
 typedef struct { uint8_t state[MOKO_QUEST_COUNT]; uint8_t progress[MOKO_QUEST_COUNT]; uint8_t target[MOKO_QUEST_COUNT]; uint32_t ap; uint8_t cleared; uint8_t secrets; } MokoQuests;
