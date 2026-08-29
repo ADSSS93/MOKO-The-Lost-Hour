@@ -23,6 +23,10 @@ void gameplay_reward(MokoGameplay *g, int amount);
 void gameplay_echo_collected(MokoGameplay *g);
 void gameplay_shard_collected(MokoGameplay *g);
 void gameplay_player_hurt(MokoGameplay *g);
+void gameplay_break_combo(MokoGameplay *g);
+void gameplay_record_death(MokoGameplay *g);
+void gameplay_record_echo(MokoGameplay *g);
+void gameplay_record_shard(MokoGameplay *g);
 int gameplay_score_bonus(const MokoGameplay *g);
 int gameplay_focus_percent(const MokoGameplay *g);
 
