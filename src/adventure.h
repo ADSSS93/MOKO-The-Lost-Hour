@@ -5,7 +5,7 @@
 #include "world_events.h"
 #include "items.h"
 #include "journal.h"
-typedef struct { MokoQuests quests; MokoWorldEvents world; MokoInventory inventory; MokoJournal journal; int last_event; int last_reward; int notice_timer; int dash_count; int current_room; int room_start_health; int challenge_notice_quest; int challenge_notice_timer; uint8_t challenge_flags[5]; } MokoAdventure;
+typedef struct { MokoQuests quests; MokoWorldEvents world; MokoInventory inventory; MokoJournal journal; int last_event; int last_reward; int notice_timer; int dash_count; int current_room; int room_start_health; int challenge_notice_quest; int challenge_notice_timer; uint8_t challenge_flags[5]; uint8_t npc_met[10]; } MokoAdventure;
 void adventure_reset(MokoAdventure *a);
 void adventure_tick(MokoAdventure *a,int room,int shards,int echoes,int combo,int health,int focus);
 int adventure_interact(MokoAdventure *a,int room,int px,int py);
@@ -14,6 +14,8 @@ void adventure_story_progress(MokoAdventure *a,int quest,int amount);
 void adventure_story_clear(MokoAdventure *a,int quest);
 void adventure_challenge_zone(MokoAdventure *a,int room,int zone,int dashing);
 void adventure_challenge_position(MokoAdventure *a,int room,int px,int py,int dashing);
+int adventure_npc_talk(MokoAdventure *a,int npc_index);
+int adventure_npc_met(const MokoAdventure *a,int npc_index);
 int adventure_completion(const MokoAdventure *a);
 const char *adventure_notice(const MokoAdventure *a);
 const char *adventure_challenge_notice(const MokoAdventure *a);
