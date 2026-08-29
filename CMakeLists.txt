@@ -9,11 +9,11 @@ add_custom_command(
     OUTPUT "${MOKO_GENERATED_MAIN}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/src/main.c" "${MOKO_GENERATED_MAIN}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/src/station_visuals.h"
+    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/src/world3d.h"
     VERBATIM
 )
 
-psn00bsdk_add_executable(moko GPREL "${MOKO_GENERATED_MAIN}" src/moko_sprite.c src/gameplay.c src/audio.c src/finale.c src/save.c src/memcard.c src/quests.c src/world_events.c src/adventure.c src/level_data.c src/items.c src/journal.c src/ambient.c src/npc.c src/enemies.c src/world_runtime.c src/intro.c src/station_visuals.c)
+psn00bsdk_add_executable(moko GPREL "${MOKO_GENERATED_MAIN}" src/moko_sprite.c src/gameplay.c src/audio.c src/finale.c src/save.c src/memcard.c src/quests.c src/world_events.c src/adventure.c src/level_data.c src/items.c src/journal.c src/ambient.c src/npc.c src/enemies.c src/world_runtime.c src/intro.c src/station_visuals.c src/world3d.c)
 target_include_directories(moko PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set(MOKO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
