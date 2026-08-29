@@ -1,19 +1,26 @@
 cmake_minimum_required(VERSION 3.21)
 project(moko LANGUAGES C ASM)
 
-# Native PS1 executable. Game code currently keeps its procedural fallback
-# renderer while the asset pipeline is introduced incrementally.
 psn00bsdk_add_executable(moko GPREL src/main.c)
 
-# Native asset roots. Binary TIM/VAG files can be embedded directly into the
-# executable with psn00bsdk_target_incbin() as they are introduced.
 set(MOKO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(MOKO_TEXTURE_DIR "${MOKO_ASSET_DIR}/textures")
 set(MOKO_AUDIO_DIR "${MOKO_ASSET_DIR}/audio")
 
-# psn00bsdk_target_incbin() requires ASM support (enabled above). Example for
-# the first real texture once assets/textures/moko.tim is committed:
-# psn00bsdk_target_incbin(moko PRIVATE moko_tim assets/textures/moko.tim)
+# Build the first native PS1 TIM asset from a text generator so the repository
+# stays editable through GitHub while the resulting game still embeds a real
+# binary TIM texture.
+set(MOKO_GENERATED_DIR "${PROJECT_BINARY_DIR}/generated")
+set(MOKO_TIM "${MOKO_GENERATED_DIR}/moko.tim")
+add_custom_command(
+    OUTPUT "${MOKO_TIM}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
+    COMMAND ${CMAKE_COMMAND} -DOUTPUT_FILE="${MOKO_TIM}" -P "${PROJECT_SOURCE_DIR}/cmake/GenerateMokoTim.cmake"
+    DEPENDS "${PROJECT_SOURCE_DIR}/cmake/GenerateMokoTim.cmake"
+    VERBATIM
+)
+add_custom_target(moko_assets DEPENDS "${MOKO_TIM}")
+add_dependencies(moko moko_assets)
+psn00bsdk_target_incbin(moko PRIVATE moko_tim "${MOKO_TIM}")
 
-# Final PlayStation BIN/CUE image.
 psn00bsdk_add_cd_image(moko_cd MOKO iso.xml DEPENDS moko)
