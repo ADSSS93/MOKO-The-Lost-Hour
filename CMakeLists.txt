@@ -3,14 +3,13 @@ project(moko LANGUAGES C ASM)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-psn00bsdk_add_executable(moko GPREL src/main.c)
+psn00bsdk_add_executable(moko GPREL src/main.c src/moko_sprite.c)
+target_include_directories(moko PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set(MOKO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(MOKO_TEXTURE_DIR "${MOKO_ASSET_DIR}/textures")
 set(MOKO_AUDIO_DIR "${MOKO_ASSET_DIR}/audio")
 
-# Generate the first native PlayStation TIM texture at build time. Python is
-# used here because CMake strings cannot represent NUL bytes reliably.
 set(MOKO_GENERATED_DIR "${PROJECT_BINARY_DIR}/generated")
 set(MOKO_TIM "${MOKO_GENERATED_DIR}/moko.tim")
 add_custom_command(
