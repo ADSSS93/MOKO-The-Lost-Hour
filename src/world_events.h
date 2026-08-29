@@ -12,4 +12,5 @@ int world_events_interact(MokoWorldEvents *w,MokoQuests *q,int room,int x,int y,
 int world_events_near(const MokoWorldEvents *w,int room,int x,int y,int radius);
 int world_events_remaining(const MokoWorldEvents *w,int room);
 const MokoWorldEventDef *world_event_def(int index);
+int world_event_unlocked(const MokoWorldEvents *w,const MokoQuests *q,int index);
 #endif
