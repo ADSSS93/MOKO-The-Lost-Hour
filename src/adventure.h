@@ -16,6 +16,7 @@ void adventure_challenge_zone(MokoAdventure *a,int room,int zone,int dashing);
 void adventure_challenge_position(MokoAdventure *a,int room,int px,int py,int dashing);
 int adventure_npc_talk(MokoAdventure *a,int npc_index);
 int adventure_npc_met(const MokoAdventure *a,int npc_index);
+int adventure_npc_reward(const MokoAdventure *a);
 int adventure_completion(const MokoAdventure *a);
 const char *adventure_notice(const MokoAdventure *a);
 const char *adventure_challenge_notice(const MokoAdventure *a);
