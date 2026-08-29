@@ -16,4 +16,7 @@ int adventure_near_event(const MokoAdventure *a,int room,int px,int py,int radiu
 int adventure_room_remaining(const MokoAdventure *a,int room);
 const MokoWorldEventDef *adventure_event(const MokoAdventure *a,int index);
 int adventure_item_count(const MokoAdventure *a,int item);
+void adventure_journal_sync(MokoAdventure *a);
+void adventure_journal_move(MokoAdventure *a,int dir);
+void adventure_journal_tab(MokoAdventure *a);
 #endif
