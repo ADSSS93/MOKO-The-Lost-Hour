@@ -3,7 +3,7 @@ project(moko LANGUAGES C ASM)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-psn00bsdk_add_executable(moko GPREL src/main.c src/moko_sprite.c src/gameplay.c src/audio.c src/finale.c src/save.c src/memcard.c src/quests.c src/world_events.c src/adventure.c src/level_data.c src/items.c src/journal.c src/ambient.c src/npc.c src/enemies.c src/world_runtime.c)
+psn00bsdk_add_executable(moko GPREL src/main.c src/moko_sprite.c src/gameplay.c src/audio.c src/finale.c src/save.c src/memcard.c src/quests.c src/world_events.c src/adventure.c src/level_data.c src/items.c src/journal.c src/ambient.c src/npc.c src/enemies.c src/world_runtime.c src/intro.c)
 target_include_directories(moko PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set(MOKO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
