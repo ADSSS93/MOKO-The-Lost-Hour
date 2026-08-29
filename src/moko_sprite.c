@@ -7,12 +7,11 @@ extern const uint8_t moko_tim[];
 static TIM_IMAGE moko_image;
 static int moko_ready=0;
 
-static void intro_tile(int x,int y,int w,int h,int r,int g,int b){TILE t;setTile(&t);setXY0(&t,x,y);setWH(&t,w,h);setRGB0(&t,r,g,b);DrawPrim(&t);}
+static void intro_tile(int x,int y,int w,int h,int r,int g,int b){TILE t;setTile(&t);setXY0(&t,x,y);setWH(&t,w,h);setRGB0(&t,r,g,b);DrawPrim((const uint32_t*)&t);}
 static void play_boot_intro(void){
     MokoIntro in;
     DRAWENV intro_draw,restore_draw;
     DISPENV intro_disp;
-    RECT screen={0,0,320,240};
     int f,scene,t,pulse;
     intro_reset(&in);
     SetDefDispEnv(&intro_disp,0,0,320,240);
@@ -23,7 +22,7 @@ static void play_boot_intro(void){
     f=FntOpen(18,150,284,72,0,128);
     while(!intro_done(&in)){
         scene=intro_scene(&in);t=intro_scene_frame(&in);pulse=(t/8)&3;
-        ClearImage(&screen,3,4,11);DrawSync(0);
+        DrawSync(0);VSync(0);intro_tile(0,0,320,240,3,4,11);
         if(scene==INTRO_STUDIO){
             intro_tile(88,74,144,2,65,85,120);intro_tile(116,92,88,28,12,20,38);
             intro_tile(122,98,76,16,45+pulse*8,80+pulse*10,115+pulse*12);
@@ -40,14 +39,13 @@ static void play_boot_intro(void){
             if(t>70){intro_tile(75,45,170,2,55,120,145);intro_tile(75,143,170,2,55,120,145);}
         }
         FntPrint(f,"%s\n%s",intro_title(&in),intro_subtitle(&in));FntFlush(f);
-        VSync(0);intro_tick(&in,0);
+        DrawSync(0);intro_tick(&in,0);
     }
-    ClearImage(&screen,3,4,11);DrawSync(0);VSync(0);
+    VSync(0);intro_tile(0,0,320,240,3,4,11);DrawSync(0);
     PutDrawEnv(&restore_draw);
 }
 
 void moko_sprite_init(void){
-    /* PSn00bSDK examples parse the TIM then upload its image/CLUT directly. */
     GetTimInfo((const uint32_t *)moko_tim,&moko_image);
     LoadImage(moko_image.prect,moko_image.paddr);
     if(moko_image.mode&0x8)LoadImage(moko_image.crect,moko_image.caddr);
