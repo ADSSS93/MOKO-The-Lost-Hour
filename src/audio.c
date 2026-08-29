@@ -5,6 +5,7 @@
 
 #define SFX_ADDR 0x1010
 #define AMB_ADDR 0x1050
+#define PULSE_ADDR 0x1090
 
 static const uint8_t click_adpcm[64] __attribute__((aligned(64)))={
   0x0c,0x00,0x77,0x55,0x33,0x11,0xee,0xcc,0xaa,0x88,0x66,0x44,0x22,0x00,0xee,0xcc,
@@ -18,24 +19,35 @@ static const uint8_t ambience_adpcm[64] __attribute__((aligned(64)))={
   0x0f,0x00,0x11,0x22,0x11,0x00,0xff,0xee,0xff,0x00,0x11,0x22,0x11,0x00,0xff,0xee,
   0x0f,0x03,0xff,0x00,0x11,0x00,0xff,0x00,0x11,0x00,0xff,0x00,0x11,0x00,0xff,0x00
 };
+static const uint8_t pulse_adpcm[64] __attribute__((aligned(64)))={
+  0x0d,0x00,0x10,0x32,0x54,0x76,0x54,0x32,0x10,0xef,0xcd,0xab,0xcd,0xef,0x10,0x21,
+  0x0e,0x00,0x32,0x43,0x54,0x43,0x32,0x21,0x10,0xff,0xee,0xdd,0xee,0xff,0x10,0x21,
+  0x0f,0x00,0x22,0x22,0x11,0x11,0x00,0x00,0xff,0xff,0xee,0xee,0xff,0xff,0x00,0x00,
+  0x0f,0x07,0x11,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
 static int current_room=-1;
+static int audio_tick=0;
 
 static void upload(uint32_t addr,const uint8_t *data,int size){
   SpuSetTransferStartAddr(addr);
-  SpuWrite((const uint32_t*)data,size);
-  SpuIsTransferCompleted(1);
+  SpuWrite((const uint32_t*)data,(size+63)&~63);
+  SpuIsTransferCompleted(SPU_TRANSFER_WAIT);
 }
 
 void moko_audio_init(void){
   SpuInit();
   upload(SFX_ADDR,click_adpcm,sizeof(click_adpcm));
   upload(AMB_ADDR,ambience_adpcm,sizeof(ambience_adpcm));
+  upload(PULSE_ADDR,pulse_adpcm,sizeof(pulse_adpcm));
   SPU_CH_ADSR1(0)=0x00ff;SPU_CH_ADSR2(0)=0;
   SPU_CH_ADSR1(1)=0x00ff;SPU_CH_ADSR2(1)=0;
+  SPU_CH_ADSR1(2)=0x00ff;SPU_CH_ADSR2(2)=0;
   SPU_CH_VOL_L(0)=0x2600;SPU_CH_VOL_R(0)=0x2600;
-  SPU_CH_VOL_L(1)=0x0800;SPU_CH_VOL_R(1)=0x0800;
+  SPU_CH_VOL_L(1)=0x0900;SPU_CH_VOL_R(1)=0x0900;
+  SPU_CH_VOL_L(2)=0x0700;SPU_CH_VOL_R(2)=0x0700;
   SPU_CH_ADDR(0)=getSPUAddr(SFX_ADDR);
   SPU_CH_ADDR(1)=getSPUAddr(AMB_ADDR);
+  SPU_CH_ADDR(2)=getSPUAddr(PULSE_ADDR);
 }
 
 void moko_audio_sfx(int pitch){
@@ -48,13 +60,28 @@ void moko_audio_sfx(int pitch){
 void moko_audio_set_room(int room){
   static const uint16_t pitch[5]={0x0b00,0x0d00,0x0900,0x1000,0x0800};
   if(room<0||room>4||room==current_room)return;
-  current_room=room;
-  SpuSetKey(0,1u<<1);
+  current_room=room;audio_tick=0;
+  SpuSetKey(0,(1u<<1)|(1u<<2));
   SPU_CH_FREQ(1)=pitch[room];
   SPU_CH_ADDR(1)=getSPUAddr(AMB_ADDR);
+  SPU_CH_VOL_L(1)=0x0700+room*0x100;
+  SPU_CH_VOL_R(1)=0x0b00-room*0x100;
   SpuSetKey(1,1u<<1);
 }
 
 void moko_audio_tick(void){
-  /* Reserved for streamed music and dynamic ambience layers. */
+  static const uint16_t pulse_pitch[5]={0x1500,0x1200,0x0d00,0x1800,0x0900};
+  int interval;
+  if(current_room<0)return;
+  audio_tick++;
+  interval=210-current_room*24;
+  if(audio_tick>=interval){
+    audio_tick=0;
+    SpuSetKey(0,1u<<2);
+    SPU_CH_FREQ(2)=pulse_pitch[current_room];
+    SPU_CH_ADDR(2)=getSPUAddr(PULSE_ADDR);
+    SPU_CH_VOL_L(2)=0x0500+current_room*0x80;
+    SPU_CH_VOL_R(2)=0x0800-current_room*0x60;
+    SpuSetKey(1,1u<<2);
+  }
 }
