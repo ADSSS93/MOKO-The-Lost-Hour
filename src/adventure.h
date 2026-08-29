@@ -4,7 +4,8 @@
 #include "quests.h"
 #include "world_events.h"
 #include "items.h"
-typedef struct { MokoQuests quests; MokoWorldEvents world; MokoInventory inventory; int last_event; int last_reward; int notice_timer; int dash_count; int current_room; } MokoAdventure;
+#include "journal.h"
+typedef struct { MokoQuests quests; MokoWorldEvents world; MokoInventory inventory; MokoJournal journal; int last_event; int last_reward; int notice_timer; int dash_count; int current_room; } MokoAdventure;
 void adventure_reset(MokoAdventure *a);
 void adventure_tick(MokoAdventure *a,int room,int shards,int echoes,int combo,int health,int focus);
 int adventure_interact(MokoAdventure *a,int room,int px,int py);
