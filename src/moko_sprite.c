@@ -24,9 +24,9 @@ void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_t
     setSprt(spr);
     setXY0(spr,x,y-bob);
     setWH(spr,16,24);
-    setUV0(spr,0,0);
+    setUV0(spr,facing?0:15,0);
     setRGB0(spr,128,128,128);
-    if(!facing){spr->u=15;spr->w=-16;}
+    if(!facing)spr->w=-16;
     addPrim(ot,spr);
     *next_packet+=sizeof(SPRT);
     page=(DR_TPAGE *)(*next_packet);
