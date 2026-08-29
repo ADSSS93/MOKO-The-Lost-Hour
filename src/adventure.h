@@ -5,7 +5,7 @@
 #include "world_events.h"
 #include "items.h"
 #include "journal.h"
-typedef struct { MokoQuests quests; MokoWorldEvents world; MokoInventory inventory; MokoJournal journal; int last_event; int last_reward; int notice_timer; int dash_count; int current_room; int room_start_health; uint8_t challenge_flags[5]; } MokoAdventure;
+typedef struct { MokoQuests quests; MokoWorldEvents world; MokoInventory inventory; MokoJournal journal; int last_event; int last_reward; int notice_timer; int dash_count; int current_room; int room_start_health; int challenge_notice_quest; int challenge_notice_timer; uint8_t challenge_flags[5]; } MokoAdventure;
 void adventure_reset(MokoAdventure *a);
 void adventure_tick(MokoAdventure *a,int room,int shards,int echoes,int combo,int health,int focus);
 int adventure_interact(MokoAdventure *a,int room,int px,int py);
@@ -16,6 +16,7 @@ void adventure_challenge_zone(MokoAdventure *a,int room,int zone,int dashing);
 void adventure_challenge_position(MokoAdventure *a,int room,int px,int py,int dashing);
 int adventure_completion(const MokoAdventure *a);
 const char *adventure_notice(const MokoAdventure *a);
+const char *adventure_challenge_notice(const MokoAdventure *a);
 int adventure_near_event(const MokoAdventure *a,int room,int px,int py,int radius);
 int adventure_room_remaining(const MokoAdventure *a,int room);
 const MokoWorldEventDef *adventure_event(const MokoAdventure *a,int index);
