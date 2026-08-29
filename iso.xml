@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iso_project>
+ <track type="data">
+  <identifiers system="PLAYSTATION" application="PLAYSTATION" volume="MOKO_LOST_HOUR" volume_set="MOKO" publisher="ADSSS93" />
+  <directory_tree>
+   <file name="SYSTEM.CNF" type="data" source="${PROJECT_SOURCE_DIR}/SYSTEM.CNF" />
+   <file name="MOKO.EXE" type="data" source="moko.exe" />
+   <dummy sectors="1024" />
+  </directory_tree>
+ </track>
+</iso_project>

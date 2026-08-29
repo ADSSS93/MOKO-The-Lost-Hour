@@ -1,0 +1,36 @@
+name: Build MOKO PS1
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y git build-essential cmake ninja-build python3 wget xz-utils
+      - name: Install PSn00bSDK builder
+        run: |
+          git clone --depth 1 https://github.com/alex-free/psn00bsdk-builder.git /tmp/psn00b-builder
+          cd /tmp/psn00b-builder
+          sudo ./build.sh
+      - name: Configure
+        run: |
+          source /usr/local/psn00bsdk/psn00b-env || true
+          cmake --preset default -B build
+      - name: Build BIN/CUE
+        run: |
+          source /usr/local/psn00bsdk/psn00b-env || true
+          cmake --build build
+      - name: Collect image
+        run: |
+          find build -name 'MOKO.bin' -o -name 'MOKO.cue'
+          mkdir -p dist
+          cp $(find build -name 'MOKO.bin' | head -1) dist/MOKO.bin
+          cp $(find build -name 'MOKO.cue' | head -1) dist/MOKO.cue
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MOKO-PS1
+          path: dist/*
