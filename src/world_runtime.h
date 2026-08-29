@@ -4,6 +4,7 @@
 #include "enemies.h"
 #include "npc.h"
 typedef struct { MokoAmbient ambient; MokoEnemies enemies; int npc_nearby; int last_enemy_hit; } MokoWorldRuntime;
+void world_runtime_bind_adventure(void *adventure);
 void world_runtime_reset(MokoWorldRuntime *w,int room);
 void world_runtime_tick(MokoWorldRuntime *w,int room,int px,int py);
 int world_runtime_touch_enemy(const MokoWorldRuntime *w,int room,int px,int py);
