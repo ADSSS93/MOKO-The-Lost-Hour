@@ -11,7 +11,8 @@ static const MokoWorldEventDef events[MOKO_WORLD_EVENT_COUNT]={
  E(1,86,68,28,WORLD_EVENT_INSPECT,10,"FALLING RAINDROP"),E(1,206,184,29,WORLD_EVENT_SECRET,46,"UNSENT STAMP"),
  E(2,96,188,33,WORLD_EVENT_INSPECT,22,"WARM SAUCER"),E(2,300,116,34,WORLD_EVENT_SECRET,48,"WHISPERING FLOORBOARD"),
  E(3,18,92,14,WORLD_EVENT_INSPECT,37,"MISSING TOOTH"),E(3,302,190,39,WORLD_EVENT_SECRET,50,"BELL'S SHADOW"),
- E(4,32,188,-1,WORLD_EVENT_INSPECT,51,"CRACKED SECOND"),E(4,246,64,-1,WORLD_EVENT_SECRET,61,"HOUR ZERO")
+ E(4,32,188,-1,WORLD_EVENT_INSPECT,51,"CRACKED SECOND"),E(4,246,64,-1,WORLD_EVENT_SECRET,61,"HOUR ZERO"),
+ E(0,252,72,26,WORLD_EVENT_SECRET,53,"CONDUCTOR'S WATCH")
 };
 static int near(int ax,int ay,int bx,int by,int r){int dx=ax-bx,dy=ay-by;return dx*dx+dy*dy<=r*r;}
 int world_event_unlocked(const MokoWorldEvents*w,const MokoQuests*q,int index){int req;(void)q;if(index<0||index>=MOKO_WORLD_EVENT_COUNT)return 0;req=events[index].requires;return req<0||(req<MOKO_WORLD_EVENT_COUNT&&w->collected[req]);}
