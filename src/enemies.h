@@ -12,5 +12,7 @@ int enemies_dash_hit(MokoEnemies *s,int room,int px,int py,int facing);
 int enemies_room_remaining(const MokoEnemies *s,int room);
 int enemies_room_cleared(const MokoEnemies *s,int room);
 int enemies_defeats(const MokoEnemies *s);
+int enemies_is_boss(int kind);
+int enemies_max_hp(int kind);
 const MokoEnemy *enemies_get(const MokoEnemies *s,int index);
 #endif
