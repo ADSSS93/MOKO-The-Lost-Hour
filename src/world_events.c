@@ -8,17 +8,18 @@ static const MokoWorldEventDef events[MOKO_WORLD_EVENT_COUNT]={
  E(4,64,92,23,WORLD_EVENT_SECRET,-1,"HIDDEN MINUTE"),E(4,154,118,44,WORLD_EVENT_INSPECT,39,"CLOCK WHISPER I"),E(4,218,146,44,WORLD_EVENT_INSPECT,40,"CLOCK WHISPER II"),E(4,274,88,44,WORLD_EVENT_SECRET,41,"CLOCK WHISPER III"),
  E(0,38,72,3,WORLD_EVENT_SECRET,2,"BROKEN DEPARTURE BOARD"),E(0,286,54,25,WORLD_EVENT_SECRET,43,"THIRTEENTH CHIME"),E(1,40,170,5,WORLD_EVENT_SECRET,8,"REVERSE DRAIN"),E(1,252,64,31,WORLD_EVENT_SECRET,14,"LAMP SHADOW"),E(2,42,132,34,WORLD_EVENT_SECRET,23,"DUSTY TOY"),E(2,286,154,35,WORLD_EVENT_SECRET,24,"BIRD'S EMPTY NEST"),E(3,52,70,37,WORLD_EVENT_SECRET,34,"BACKWARD LEVER"),E(3,250,66,39,WORLD_EVENT_SECRET,36,"SILENT HAMMER"),E(4,110,62,-1,WORLD_EVENT_SECRET,40,"MEMORY CRACK"),E(4,292,176,-1,WORLD_EVENT_SECRET,42,"SIXTIETH MARK"),
  E(0,174,82,26,WORLD_EVENT_INSPECT,4,"CLOCK WITH NO HANDS"),E(0,304,188,3,WORLD_EVENT_SECRET,44,"LOCKER 00"),
- E(1,86,68,28,WORLD_EVENT_INSPECT,10,"FALLING RAINDROP"),E(1,206,184,29,WORLD_EVENT_SECRET,46,"UNSENT STAMP"),
+ E(1,86,68,-1,WORLD_EVENT_INSPECT,10,"FALLING RAINDROP"),E(1,206,184,29,WORLD_EVENT_SECRET,46,"UNSENT STAMP"),
  E(2,96,188,33,WORLD_EVENT_INSPECT,22,"WARM SAUCER"),E(2,300,116,34,WORLD_EVENT_SECRET,48,"WHISPERING FLOORBOARD"),
  E(3,18,92,14,WORLD_EVENT_INSPECT,37,"MISSING TOOTH"),E(3,302,190,39,WORLD_EVENT_SECRET,50,"BELL'S SHADOW"),
  E(4,32,188,-1,WORLD_EVENT_INSPECT,51,"CRACKED SECOND"),E(4,246,64,-1,WORLD_EVENT_SECRET,61,"HOUR ZERO"),
- E(0,252,72,26,WORLD_EVENT_SECRET,53,"CONDUCTOR'S WATCH")
+ E(0,252,72,26,WORLD_EVENT_SECRET,53,"CONDUCTOR'S WATCH"),
+ E(1,134,72,-1,WORLD_EVENT_SECRET,55,"RAIN ALTAR"),E(1,198,92,-1,WORLD_EVENT_INSPECT,64,"SKYWARD DROP")
 };
 static int near(int ax,int ay,int bx,int by,int r){int dx=ax-bx,dy=ay-by;return dx*dx+dy*dy<=r*r;}
 int world_event_unlocked(const MokoWorldEvents*w,const MokoQuests*q,int index){int req;(void)q;if(index<0||index>=MOKO_WORLD_EVENT_COUNT)return 0;req=events[index].requires;return req<0||(req<MOKO_WORLD_EVENT_COUNT&&w->collected[req]);}
 void world_events_reset(MokoWorldEvents*w){int i;w->interactions=0;for(i=0;i<MOKO_WORLD_EVENT_COUNT;i++)w->collected[i]=0;for(i=0;i<5;i++)w->room_visits[i]=0;}
 void world_events_enter_room(MokoWorldEvents*w,int room,MokoQuests*q){if(room<0||room>4)return;if(w->room_visits[room]<255)w->room_visits[room]++;if(room==0){quests_trigger(q,24);quests_trigger(q,26);}else if(room==1){quests_trigger(q,28);quests_trigger(q,29);quests_trigger(q,30);}else if(room==2){quests_trigger(q,32);quests_trigger(q,33);quests_trigger(q,35);}else if(room==3){quests_trigger(q,36);quests_trigger(q,37);quests_trigger(q,38);}else if(room==4){quests_trigger(q,23);}}
 int world_events_interact(MokoWorldEvents*w,MokoQuests*q,int room,int x,int y,int radius){int i,reward=0;for(i=0;i<MOKO_WORLD_EVENT_COUNT;i++){const MokoWorldEventDef*d=&events[i];if(w->collected[i]||d->room!=room||!world_event_unlocked(w,q,i)||!near(x,y,d->x,d->y,radius))continue;w->collected[i]=1;w->interactions++;if(d->quest>=0){quests_trigger(q,d->quest);reward=quests_add(q,d->quest,1);}return reward?reward:1;}return 0;}
-int world_events_near(const MokoWorldEvents*w,int room,int x,int y,int radius){int i;for(i=0;i<MOKO_WORLD_EVENT_COUNT;i++)if(!w->collected[i]&&events[i].room==room&&near(x,y,events[i].x,events[i].y,radius))return i;return -1;}
+int world_events_near(const MokoWorldEvents*w,int room,int x,int y,int radius){int i;for(i=0;i<MOKO_WORLD_EVENT_COUNT;i++)if(!w->collected[i]&&events[i].room==room&&world_event_unlocked(w,0,i)&&near(x,y,events[i].x,events[i].y,radius))return i;return -1;}
 int world_events_remaining(const MokoWorldEvents*w,int room){int i,n=0;for(i=0;i<MOKO_WORLD_EVENT_COUNT;i++)if(!w->collected[i]&&events[i].room==room)n++;return n;}
 const MokoWorldEventDef *world_event_def(int index){return(index>=0&&index<MOKO_WORLD_EVENT_COUNT)?&events[index]:0;}
