@@ -17,15 +17,19 @@ void moko_sprite_init(void){
 void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_tick,unsigned int *ot,char **next_packet){
     SPRT *spr;
     DR_TPAGE *page;
-    int bob=(walk_tick/6)&1;
+    int moving=(walk_tick>0);
+    int frame=moving ? 1+((walk_tick/7)&1) : 0;
+    int bob=moving ? ((walk_tick/7)&1) : ((anim_tick/24)&1);
     if(!moko_ready)return;
     if(invuln>0&&((anim_tick/3)&1))return;
     spr=(SPRT *)(*next_packet);
     setSprt(spr);
     setXY0(spr,x,y-bob);
     setWH(spr,16,24);
-    setUV0(spr,0,0);
+    setUV0(spr,frame*16,0);
     setRGB0(spr,128,128,128);
+    /* The first sheet is authored facing right. A later POLY_FT4 pass will
+       provide true UV mirroring; keep gameplay facing independent for now. */
     (void)facing;
     addPrim(ot,spr);
     *next_packet+=sizeof(SPRT);
