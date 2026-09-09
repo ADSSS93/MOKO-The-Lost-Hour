@@ -14,8 +14,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Hosted runners can contain unrelated third-party apt sources. They must not
-          # be able to break a PS1 build when their mirrors are temporarily inconsistent.
           sudo rm -f /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get -o Acquire::Retries=3 update
           sudo apt-get install -y --no-install-recommends cmake ninja-build curl unzip
@@ -43,10 +41,13 @@ jobs:
 
       - name: Verify gameplay revision is compiled
         run: |
-          grep -a -q 'ENEMY REV 249' build/moko || grep -a -q 'ENEMY REV 249' build/moko.exe || {
-            echo 'Enemy visual revision marker missing from executable';
+          grep -a -q 'SAVE REV 252' build/moko || grep -a -q 'SAVE REV 252' build/moko.exe || {
+            echo 'Persistent save revision marker missing from executable';
             find build -maxdepth 2 -type f -print;
             exit 1;
+          }
+          grep -a -q 'TRIANGLE - CONTINUE' build/moko || grep -a -q 'TRIANGLE - CONTINUE' build/moko.exe || {
+            echo 'Continue menu missing from executable'; exit 1;
           }
 
       - name: Collect disc image
@@ -57,11 +58,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO enemy visual/gameplay revision 249\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO persistent checkpoint/save revision 252\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-enemy249-run${{ github.run_number }}
+          name: MOKO-PS1-save252-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
