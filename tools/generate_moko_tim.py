@@ -12,6 +12,17 @@ FRAME_W, FRAME_H, FRAMES = 16, 24, 6
 width, height = FRAME_W * FRAMES, FRAME_H
 pixels = [0] * (width * height)
 
+# PS1 BGR555 colors
+PURPLE = 0x4C5B
+PURPLE_DARK = 0x2D35
+PURPLE_LIGHT = 0x6D7D
+PINK = 0x5DDF
+CREAM = 0x6F7B
+WHITE = 0x7FFF
+BLACK = 0x0842
+GOLD = 0x2B3F
+CYAN = 0x7E60
+
 def put(frame, x, y, color):
     if 0 <= x < FRAME_W and 0 <= y < FRAME_H:
         pixels[y * width + frame * FRAME_W + x] = color
@@ -22,36 +33,49 @@ def box(frame, x0, y0, x1, y1, color):
             put(frame, x, y, color)
 
 def draw_moko(frame, step=0, facing_right=True):
-    skin, coat, dark, accent = 0x5E7F, 0x294A, 0x2529, 0x4210
     bob = 1 if step == 2 else 0
-    box(frame, 4, 2-bob, 11, 9-bob, skin)
+    # ears + head silhouette
+    put(frame, 3, 1-bob, PURPLE_DARK); put(frame, 4, 0-bob, PURPLE_DARK); put(frame, 5, 2-bob, PURPLE)
+    put(frame, 10, 2-bob, PURPLE); put(frame, 11, 0-bob, PURPLE_DARK); put(frame, 12, 1-bob, PURPLE_DARK)
+    box(frame, 3, 3-bob, 12, 9-bob, PURPLE)
+    box(frame, 4, 4-bob, 11, 8-bob, PURPLE_LIGHT)
+    # face
     if facing_right:
-        box(frame, 3, 3-bob, 5, 7-bob, dark)
-        put(frame, 9, 5-bob, 0x7FFF); put(frame, 10, 5-bob, dark)
+        put(frame, 9, 5-bob, WHITE); put(frame, 10, 5-bob, BLACK)
+        put(frame, 11, 7-bob, PINK)
     else:
-        box(frame, 10, 3-bob, 12, 7-bob, dark)
-        put(frame, 6, 5-bob, 0x7FFF); put(frame, 5, 5-bob, dark)
-    box(frame, 2, 9-bob, 13, 18-bob, coat)
-    if facing_right: box(frame, 4, 10-bob, 5, 16-bob, accent)
-    else: box(frame, 10, 10-bob, 11, 16-bob, accent)
-    put(frame, 8, 12-bob, 0x7FFF)
+        put(frame, 6, 5-bob, WHITE); put(frame, 5, 5-bob, BLACK)
+        put(frame, 4, 7-bob, PINK)
+    # body
+    box(frame, 3, 9-bob, 12, 18-bob, PURPLE)
+    box(frame, 4, 10-bob, 11, 17-bob, PURPLE_DARK)
+    # clock on chest
+    box(frame, 6, 11-bob, 9, 14-bob, GOLD)
+    box(frame, 7, 12-bob, 8, 13-bob, CREAM)
+    put(frame, 8, 12-bob, BLACK); put(frame, 8, 13-bob, CYAN)
+    # arms + legs
     if step == 1:
-        box(frame, 0, 11-bob, 2, 17-bob, coat); box(frame, 13, 9-bob, 15, 15-bob, coat)
-        box(frame, 3, 19-bob, 6, 22-bob, dark); box(frame, 10, 18-bob, 13, 21-bob, dark)
+        box(frame, 1, 10-bob, 3, 16-bob, PURPLE); box(frame, 12, 11-bob, 14, 17-bob, PURPLE)
+        box(frame, 3, 18-bob, 6, 22-bob, PURPLE_DARK); box(frame, 10, 17-bob, 13, 21-bob, PURPLE_DARK)
     elif step == 2:
-        box(frame, 0, 9-bob, 2, 15-bob, coat); box(frame, 13, 11-bob, 15, 17-bob, coat)
-        box(frame, 2, 18-bob, 5, 21-bob, dark); box(frame, 9, 19-bob, 12, 22-bob, dark)
+        box(frame, 1, 11-bob, 3, 17-bob, PURPLE); box(frame, 12, 9-bob, 14, 15-bob, PURPLE)
+        box(frame, 2, 17-bob, 5, 21-bob, PURPLE_DARK); box(frame, 9, 18-bob, 12, 22-bob, PURPLE_DARK)
     else:
-        box(frame, 1, 10-bob, 2, 16-bob, coat); box(frame, 13, 10-bob, 14, 16-bob, coat)
-        box(frame, 3, 19-bob, 6, 22-bob, dark); box(frame, 9, 19-bob, 12, 22-bob, dark)
+        box(frame, 1, 10-bob, 3, 16-bob, PURPLE); box(frame, 12, 10-bob, 14, 16-bob, PURPLE)
+        box(frame, 3, 18-bob, 6, 22-bob, PURPLE_DARK); box(frame, 9, 18-bob, 12, 22-bob, PURPLE_DARK)
+    # clock-hand tail, strongly asymmetric to preserve Moko identity
+    if facing_right:
+        for k in range(5): put(frame, 13+k//2, 14+k-bob, PINK)
+        put(frame, 15, 19-bob, GOLD); put(frame, 14, 18-bob, GOLD)
+    else:
+        for k in range(5): put(frame, 2-k//2, 14+k-bob, PINK)
+        put(frame, 0, 19-bob, GOLD); put(frame, 1, 18-bob, GOLD)
 
 for base, right in ((0, True), (3, False)):
     draw_moko(base, 0, right)
     draw_moko(base + 1, 1, right)
     draw_moko(base + 2, 2, right)
 
-# TIM v0, 16-bit direct color. 96x24 contains right/left idle + two walk frames.
-# VRAM x=448 keeps the sheet on a single 16-bit texture page.
 header = struct.pack('<II', 0x10, 0x02)
 image_bytes = b''.join(struct.pack('<H', p) for p in pixels)
 block_size = 12 + len(image_bytes)
