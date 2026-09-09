@@ -1,39 +1,119 @@
-# Generate a tiny valid 16-bit PlayStation TIM texture at build time.
-# The image is 16x24 pixels and is intentionally simple: it proves the native
-# TIM -> incbin -> VRAM path without requiring a binary file in the repository.
+# Generate Moko's native 16-bit PlayStation TIM sprite sheet at build time.
+# Six 16x24 frames: three facing right (idle/walk A/walk B), then mirrored left.
 if(NOT DEFINED OUTPUT_FILE)
   message(FATAL_ERROR "OUTPUT_FILE is required")
 endif()
 
 # TIM header: magic 0x10, flags 0x02 (16-bit direct color).
 set(hex "1000000002000000")
-# Image block: 12-byte header + 16*24*2 bytes = 780 (0x30c).
-string(APPEND hex "0c030000c001000010001800")
+# Image block: 12-byte header + 96*24*2 bytes = 4620 = 0x120c.
+string(APPEND hex "0c120000c001000060001800")
 
-# 384 little-endian BGR555 pixels. Transparent-looking dark border plus a
-# warm face/body silhouette, teal coat and bright eye/highlight pixels.
+# BGR555 palette-like direct colours used by the procedural sprite.
+# 0000 transparent/black, warm skin, dark hair, teal coat, scarf, boots, eye.
 foreach(y RANGE 0 23)
-  foreach(x RANGE 0 15)
+  foreach(x RANGE 0 95)
+    math(EXPR frame "${x} / 16")
+    math(EXPR lx "${x} % 16")
+    set(mirror 0)
+    if(frame GREATER 2)
+      set(mirror 1)
+      math(EXPR pose "${frame} - 3")
+      math(EXPR sx "15 - ${lx}")
+    else()
+      set(pose ${frame})
+      set(sx ${lx})
+    endif()
     set(px "0000")
-    if(y GREATER_EQUAL 2 AND y LESS_EQUAL 9 AND x GREATER_EQUAL 4 AND x LESS_EQUAL 11)
+
+    # Hair silhouette and fringe.
+    if(y GREATER_EQUAL 1 AND y LESS_EQUAL 3 AND sx GREATER_EQUAL 5 AND sx LESS_EQUAL 11)
+      set(px "a610")
+    endif()
+    if(y GREATER_EQUAL 3 AND y LESS_EQUAL 8 AND sx GREATER_EQUAL 4 AND sx LESS_EQUAL 11)
       set(px "7f5e")
     endif()
-    if(y GREATER_EQUAL 9 AND y LESS_EQUAL 19 AND x GREATER_EQUAL 2 AND x LESS_EQUAL 13)
-      set(px "4a29")
+    if(y EQUAL 3 AND sx GREATER_EQUAL 4 AND sx LESS_EQUAL 8)
+      set(px "a610")
     endif()
-    if(y GREATER_EQUAL 19 AND y LESS_EQUAL 22 AND ((x GREATER_EQUAL 3 AND x LESS_EQUAL 6) OR (x GREATER_EQUAL 9 AND x LESS_EQUAL 12)))
-      set(px "2925")
+    if(y GREATER_EQUAL 4 AND y LESS_EQUAL 6 AND sx EQUAL 4)
+      set(px "a610")
     endif()
-    if(y GREATER_EQUAL 4 AND y LESS_EQUAL 6 AND x EQUAL 9)
+
+    # Face highlight, eye and small nose pixel on the facing side.
+    if(y GREATER_EQUAL 4 AND y LESS_EQUAL 7 AND sx GREATER_EQUAL 9 AND sx LESS_EQUAL 11)
+      set(px "bf72")
+    endif()
+    if(y EQUAL 5 AND sx EQUAL 10)
       set(px "ffff")
     endif()
+    if(y EQUAL 7 AND sx EQUAL 12)
+      set(px "7f5e")
+    endif()
+
+    # Red memory scarf trailing behind Moko.
+    if(y GREATER_EQUAL 9 AND y LESS_EQUAL 11 AND sx GREATER_EQUAL 0 AND sx LESS_EQUAL 5)
+      set(px "3f2d")
+    endif()
+    if(pose EQUAL 2 AND y GREATER_EQUAL 10 AND y LESS_EQUAL 12 AND sx GREATER_EQUAL 0 AND sx LESS_EQUAL 3)
+      set(px "3f2d")
+    endif()
+
+    # Teal coat with bright lapel and belt.
+    if(y GREATER_EQUAL 9 AND y LESS_EQUAL 17 AND sx GREATER_EQUAL 3 AND sx LESS_EQUAL 12)
+      set(px "4a29")
+    endif()
+    if(y GREATER_EQUAL 10 AND y LESS_EQUAL 15 AND sx GREATER_EQUAL 8 AND sx LESS_EQUAL 10)
+      set(px "ef39")
+    endif()
+    if(y EQUAL 16 AND sx GREATER_EQUAL 3 AND sx LESS_EQUAL 12)
+      set(px "2925")
+    endif()
+
+    # Arms change with the walk pose.
+    if(pose EQUAL 0)
+      if(y GREATER_EQUAL 11 AND y LESS_EQUAL 16 AND (sx EQUAL 2 OR sx EQUAL 13))
+        set(px "4a29")
+      endif()
+    elseif(pose EQUAL 1)
+      if(y GREATER_EQUAL 10 AND y LESS_EQUAL 14 AND sx GREATER_EQUAL 12 AND sx LESS_EQUAL 14)
+        set(px "4a29")
+      endif()
+      if(y GREATER_EQUAL 13 AND y LESS_EQUAL 17 AND sx GREATER_EQUAL 1 AND sx LESS_EQUAL 3)
+        set(px "4a29")
+      endif()
+    else()
+      if(y GREATER_EQUAL 13 AND y LESS_EQUAL 17 AND sx GREATER_EQUAL 12 AND sx LESS_EQUAL 14)
+        set(px "4a29")
+      endif()
+      if(y GREATER_EQUAL 10 AND y LESS_EQUAL 14 AND sx GREATER_EQUAL 1 AND sx LESS_EQUAL 3)
+        set(px "4a29")
+      endif()
+    endif()
+
+    # Legs/boots: alternate stance for a readable walk cycle.
+    if(pose EQUAL 0)
+      if(y GREATER_EQUAL 17 AND y LESS_EQUAL 22 AND ((sx GREATER_EQUAL 4 AND sx LESS_EQUAL 6) OR (sx GREATER_EQUAL 9 AND sx LESS_EQUAL 11)))
+        set(px "2925")
+      endif()
+    elseif(pose EQUAL 1)
+      if(y GREATER_EQUAL 17 AND y LESS_EQUAL 22 AND ((sx GREATER_EQUAL 3 AND sx LESS_EQUAL 5) OR (sx GREATER_EQUAL 10 AND sx LESS_EQUAL 12)))
+        set(px "2925")
+      endif()
+    else()
+      if(y GREATER_EQUAL 17 AND y LESS_EQUAL 22 AND ((sx GREATER_EQUAL 5 AND sx LESS_EQUAL 7) OR (sx GREATER_EQUAL 8 AND sx LESS_EQUAL 10)))
+        set(px "2925")
+      endif()
+    endif()
+    if(y EQUAL 22 AND ((sx GREATER_EQUAL 2 AND sx LESS_EQUAL 6) OR (sx GREATER_EQUAL 9 AND sx LESS_EQUAL 13)))
+      set(px "0821")
+    endif()
+
     string(APPEND hex "${px}")
   endforeach()
 endforeach()
 
 file(WRITE "${OUTPUT_FILE}" "")
-# Convert hexadecimal pairs to raw bytes using a generated shell-independent
-# helper script consumed by CMake itself.
 string(LENGTH "${hex}" hex_len)
 math(EXPR last "${hex_len} - 2")
 foreach(i RANGE 0 ${last} 2)
