@@ -58,4 +58,17 @@ for(i=0;i<4;i++){sx=108+i*31;if(finale.socket[i]){p=(anim_tick/9+i)&3;rect(sx-2-
 if(finale_hazard_active(&finale)){rect(finale_sweep_x(&finale),68,4,138,244,56,82);if(finale.phase==FINALE_STABILIZE)rect(28,finale_sweep_y(&finale),264,4,72,181,238);}
 if(finale.phase==FINALE_STABILIZE){rect(72,191,176,10,26,18,30);rect(75,194,(finale.stability*170)/100,4,81,230,241);}''')
 
+# Stamp this visual revision into both title and HUD so a stale BIN/CUE is obvious.
+title_old = 'FntPrint(font_id,"\\n\\n      M O K O\\n   THE LOST HOUR\\n\\n START - BEGIN\\n Find four shards. Remember why.");'
+title_new = 'FntPrint(font_id,"\\n\\n      M O K O\\n   THE LOST HOUR\\n\\n VISUAL REV 241\\n START - BEGIN\\n Find four shards. Remember why.");'
+if title_old not in src:
+    raise SystemExit("could not stamp title revision")
+src = src.replace(title_old, title_new, 1)
+
+hud_old = 'FntPrint(font_id,"%02d:%02d S%d/4 HP%d SCORE%d FOCUS%d\\n%s R1:DASH SELECT:JOURNAL EV%d%%",'
+hud_new = 'FntPrint(font_id,"REV241 %02d:%02d S%d/4 HP%d SCORE%d FOCUS%d\\n%s R1:DASH SELECT:JOURNAL EV%d%%",'
+if hud_old not in src:
+    raise SystemExit("could not stamp HUD revision")
+src = src.replace(hud_old, hud_new, 1)
+
 pathlib.Path(sys.argv[2]).write_text(src)
