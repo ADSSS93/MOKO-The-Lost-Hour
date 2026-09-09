@@ -4,7 +4,12 @@
 #include <stdint.h>
 
 #define MOKO_SAVE_MAGIC 0x4d4f4b4fU
-#define MOKO_SAVE_VERSION 2
+#define MOKO_SAVE_VERSION 3
+#define MOKO_SAVE_ITEMS 9
+#define MOKO_SAVE_NPCS 10
+#define MOKO_SAVE_EVENTS 77
+#define MOKO_SAVE_QUESTS 53
+#define MOKO_SAVE_ROOMS 5
 
 typedef struct {
     uint32_t magic;
@@ -25,6 +30,15 @@ typedef struct {
     uint8_t reserved;
     uint32_t checkpoint_score;
     uint32_t checkpoint_time;
+    uint8_t inventory[MOKO_SAVE_ITEMS];
+    uint8_t npc_met[MOKO_SAVE_NPCS];
+    uint8_t npc_delivered[MOKO_SAVE_NPCS];
+    uint8_t world_collected[MOKO_SAVE_EVENTS];
+    uint8_t world_room_visits[MOKO_SAVE_ROOMS];
+    uint8_t quest_state[MOKO_SAVE_QUESTS];
+    uint8_t quest_progress[MOKO_SAVE_QUESTS];
+    uint8_t challenge_flags[MOKO_SAVE_ROOMS];
+    uint32_t quest_ap;
 } MokoSave;
 
 void moko_save_defaults(MokoSave *save);
