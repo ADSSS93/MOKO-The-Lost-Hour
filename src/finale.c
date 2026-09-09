@@ -1,65 +1,60 @@
 #include "finale.h"
 
-#define FINALE_BASE_TIME 360
+#define FINALE_BASE_TIME 420
 #define FINALE_RECOVERY_TIME 90
 #define FINALE_CLEAR_STABILITY 60
+#define WARDEN_MAX_HP 6
 
 void finale_reset(MokoFinale *f){
  int i; for(i=0;i<4;i++)f->socket[i]=0;
- f->charge=0; f->phase=FINALE_DORMANT; f->phase_timer=0;
+ f->charge=0; f->phase=FINALE_DORMANT; f->boss_hp=0; f->boss_flash=0; f->phase_timer=0;
  f->sweep_tick=0; f->stability=0; f->perfect_chain=1;
 }
 
 void finale_begin(MokoFinale *f,int shards){
- if(shards>=4&&f->phase==FINALE_DORMANT){f->phase=FINALE_RESTORE;f->phase_timer=0;f->sweep_tick=0;f->stability=0;}
+ if(shards>=4&&f->phase==FINALE_DORMANT){f->phase=FINALE_RESTORE;f->phase_timer=0;f->sweep_tick=0;f->stability=0;f->boss_hp=WARDEN_MAX_HP;f->boss_flash=0;}
 }
 
 int finale_activate_socket(MokoFinale *f,int index,int shards){
  if(shards<4||f->phase!=FINALE_RESTORE||index<0||index>3||f->socket[index])return 0;
  f->socket[index]=1; f->charge++; f->stability+=20;
- if(f->charge>=4){f->phase=FINALE_STABILIZE;f->phase_timer=FINALE_BASE_TIME;f->stability=40;f->sweep_tick=0;}
+ if(f->charge>=4){f->phase=FINALE_STABILIZE;f->phase_timer=FINALE_BASE_TIME;f->stability=40;f->sweep_tick=0;f->boss_hp=WARDEN_MAX_HP;f->boss_flash=0;}
+ return 1;
+}
+
+int finale_boss_hit(MokoFinale *f){
+ if(f->phase!=FINALE_STABILIZE||f->boss_hp<=0||f->boss_flash>0)return 0;
+ f->boss_hp--;f->boss_flash=18;f->stability+=10;if(f->stability>100)f->stability=100;
+ if(f->boss_hp<=0&&f->stability>=FINALE_CLEAR_STABILITY){f->phase=FINALE_COMPLETE;f->stability=100;}
  return 1;
 }
 
 void finale_tick(MokoFinale *f,int dashing){
  if(f->phase==FINALE_DORMANT||f->phase==FINALE_COMPLETE)return;
- f->sweep_tick++;
+ f->sweep_tick++;if(f->boss_flash>0)f->boss_flash--;
  if(f->phase==FINALE_RESTORE){
   if(f->stability>0&&(f->sweep_tick%90)==0)f->stability--;
   return;
  }
  if(f->phase==FINALE_STABILIZE){
   if(f->phase_timer>0)f->phase_timer--;
-  if(dashing){
-   if(f->stability<100)f->stability+=3;
-   if(f->stability>100)f->stability=100;
-  }else if((f->sweep_tick%5)==0&&f->stability>0)f->stability--;
-
-  if(f->stability<=0){
-   f->stability=18;
-   f->phase_timer+=FINALE_RECOVERY_TIME;
-   f->perfect_chain=0;
-  }
-
-  if(f->phase_timer<=0){
-   if(f->stability>=FINALE_CLEAR_STABILITY){
-    f->phase=FINALE_COMPLETE;
-    f->stability=100;
-   }else{
-    /* The player cannot simply wait out the finale: build stability with Memory Dash. */
-    f->phase_timer=FINALE_RECOVERY_TIME;
-    f->perfect_chain=0;
-   }
-  }
+  if(dashing){if(f->stability<100)f->stability++;}
+  else if((f->sweep_tick%6)==0&&f->stability>0)f->stability--;
+  if(f->stability<=0){f->stability=18;f->phase_timer+=FINALE_RECOVERY_TIME;f->perfect_chain=0;}
+  if(f->phase_timer<=0){f->phase_timer=FINALE_RECOVERY_TIME;f->perfect_chain=0;}
  }
 }
 
+int finale_boss_x(const MokoFinale *f){
+ int span=166,t=(f->sweep_tick*2+(WARDEN_MAX_HP-f->boss_hp)*29)%(span*2);if(t>span)t=span*2-t;return 72+t;
+}
+int finale_boss_y(const MokoFinale *f){return 106+(((f->sweep_tick/18)+(WARDEN_MAX_HP-f->boss_hp))&1)*16;}
 int finale_sweep_x(const MokoFinale *f){int span=252,t=(f->sweep_tick*3)%(span*2);if(t>span)t=span*2-t;return 34+t;}
 int finale_sweep_y(const MokoFinale *f){int span=112,t=(f->sweep_tick*2+37)%(span*2);if(t>span)t=span*2-t;return 82+t;}
 int finale_hazard_active(const MokoFinale *f){return f->phase==FINALE_RESTORE||f->phase==FINALE_STABILIZE;}
 int finale_complete(const MokoFinale *f){return f->phase==FINALE_COMPLETE;}
 int finale_score_bonus(const MokoFinale *f){
- int b=f->charge*125+f->stability*5;
+ int b=f->charge*125+f->stability*5+(WARDEN_MAX_HP-f->boss_hp)*175;
  if(f->perfect_chain&&f->phase==FINALE_COMPLETE)b+=1000;
  return b;
 }
