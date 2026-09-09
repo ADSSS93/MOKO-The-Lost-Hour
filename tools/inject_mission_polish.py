@@ -21,7 +21,7 @@ static void mission_art(void){
         else if(!shard_taken[3])objective_marker(145,174,80,225,245);
     }else{
         if(shards>=4&&finale.phase==FINALE_RESTORE){for(i=0;i<4;i++)if(!finale.socket[i])objective_marker(110+i*28,151,95,230,245);}
-        if(finale.phase==FINALE_STABILIZE&&!finale_complete(&finale))objective_marker(finale.warden_x,finale.warden_y,235,70,105);
+        if(finale.phase==FINALE_STABILIZE&&!finale_complete(&finale))objective_marker(finale_boss_x(&finale),finale_boss_y(&finale),235,70,105);
     }
     if(room<4&&shard_taken[room]){int pulse=(anim_tick/8)&3;rect(304-pulse,91-pulse,12+pulse*2,54+pulse*2,20,70,90);rect(308,95,8,46,70,210,230);}
 }
@@ -45,17 +45,13 @@ replacement = 'world_event_art();echo_art();mission_art();if(room<4&&!shard_take
 if needle not in src: raise SystemExit('room art body anchor missing')
 src = src.replace(needle, replacement, 1)
 
-needle = 'static void hud(void){static const char*n[]={'
-replacement = 'static void hud(void){hud_vitals();static const char*n[]={'
-if needle not in src: raise SystemExit('hud anchor missing')
+needle = 'int s=timer_frames/60,near=adventure_near_event(&adventure,room,px,py,24),ni=npc_near(room,px,py,24);FntPrint'
+replacement = 'int s=timer_frames/60,near=adventure_near_event(&adventure,room,px,py,24),ni=npc_near(room,px,py,24);hud_vitals();FntPrint'
+if needle not in src: raise SystemExit('hud vitals anchor missing')
 src = src.replace(needle, replacement, 1)
 
-needle = 'FntPrint(font_id,"%02d:%02d S%d/4 HP%d SCORE%d FOCUS%d\\n%s R1:DASH SELECT:JOURNAL EV%d%%",'
-if needle not in src:
-    needle = 'FntPrint(font_id,"S252 %02d:%02d S%d/4 HP%d SCORE%d FOCUS%d\\n%s R1:DASH SELECT:JOURNAL EV%d%%",'
-    replacement = 'FntPrint(font_id,"M253 %02d:%02d S%d/4 HP%d SCORE%d FOCUS%d\\n%s R1:DASH SELECT:JOURNAL EV%d%%\\n%s",'
-else:
-    replacement = 'FntPrint(font_id,"M253 %02d:%02d S%d/4 HP%d SCORE%d FOCUS%d\\n%s R1:DASH SELECT:JOURNAL EV%d%%\\n%s",'
+needle = 'FntPrint(font_id,"S252 %02d:%02d S%d/4 HP%d SCORE%d FOCUS%d\\n%s R1:DASH SELECT:JOURNAL EV%d%%",'
+replacement = 'FntPrint(font_id,"M253 %02d:%02d S%d/4 HP%d SCORE%d FOCUS%d\\n%s R1:DASH SELECT:JOURNAL EV%d%%\\n%s",'
 if needle not in src: raise SystemExit('hud text anchor missing')
 src = src.replace(needle, replacement, 1)
 
