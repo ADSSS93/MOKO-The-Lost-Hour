@@ -12,6 +12,16 @@ uint16_t moko_save_checksum(const MokoSave *save){
     return (uint16_t)((sum^(sum>>16))&0xffffu);
 }
 
+static void clear_progress(MokoSave *save){
+    int i;
+    for(i=0;i<MOKO_SAVE_ITEMS;i++)save->inventory[i]=0;
+    for(i=0;i<MOKO_SAVE_NPCS;i++){save->npc_met[i]=0;save->npc_delivered[i]=0;}
+    for(i=0;i<MOKO_SAVE_EVENTS;i++)save->world_collected[i]=0;
+    for(i=0;i<MOKO_SAVE_ROOMS;i++){save->world_room_visits[i]=0;save->challenge_flags[i]=0;}
+    for(i=0;i<MOKO_SAVE_QUESTS;i++){save->quest_state[i]=0;save->quest_progress[i]=0;}
+    save->quest_ap=0;
+}
+
 void moko_save_defaults(MokoSave *save){
     save->magic=MOKO_SAVE_MAGIC;
     save->version=MOKO_SAVE_VERSION;
@@ -31,6 +41,7 @@ void moko_save_defaults(MokoSave *save){
     save->reserved=0;
     save->checkpoint_score=0;
     save->checkpoint_time=0;
+    clear_progress(save);
     save->checksum=moko_save_checksum(save);
 }
 
@@ -76,5 +87,6 @@ void moko_save_clear_checkpoint(MokoSave *save){
     save->shard_mask=0;
     save->echo_mask=0;
     save->switch_mask=0;
+    clear_progress(save);
     refresh(save);
 }
