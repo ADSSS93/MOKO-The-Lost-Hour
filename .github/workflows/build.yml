@@ -41,10 +41,13 @@ jobs:
 
       - name: Verify gameplay revision is compiled
         run: |
-          grep -a -q 'SAVE REV 252' build/moko || grep -a -q 'SAVE REV 252' build/moko.exe || {
-            echo 'Persistent save revision marker missing from executable';
+          grep -a -q 'MISSION REV 253' build/moko || grep -a -q 'MISSION REV 253' build/moko.exe || {
+            echo 'Mission polish revision marker missing from executable';
             find build -maxdepth 2 -type f -print;
             exit 1;
+          }
+          grep -a -q 'OBJECTIVE: ACTIVATE BOTH TIME SWITCHES' build/moko || grep -a -q 'OBJECTIVE: ACTIVATE BOTH TIME SWITCHES' build/moko.exe || {
+            echo 'Mission objective text missing from executable'; exit 1;
           }
           grep -a -q 'TRIANGLE - CONTINUE' build/moko || grep -a -q 'TRIANGLE - CONTINUE' build/moko.exe || {
             echo 'Continue menu missing from executable'; exit 1;
@@ -58,11 +61,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO persistent checkpoint/save revision 252\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO mission-guidance revision 253\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-save252-run${{ github.run_number }}
+          name: MOKO-PS1-mission253-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
