@@ -13,7 +13,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build curl unzip
+        run: |
+          # Hosted runners can contain unrelated third-party apt sources. They must not
+          # be able to break a PS1 build when their mirrors are temporarily inconsistent.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get -o Acquire::Retries=3 update
+          sudo apt-get install -y --no-install-recommends cmake ninja-build curl unzip
 
       - name: Install prebuilt PSn00bSDK
         run: |
@@ -36,10 +41,10 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify visual revision is compiled
+      - name: Verify gameplay revision is compiled
         run: |
-          grep -a -q 'VISUAL REV 241' build/moko || grep -a -q 'VISUAL REV 241' build/moko.exe || {
-            echo 'Visual revision marker missing from executable';
+          grep -a -q 'BOSS REV 245' build/moko || grep -a -q 'BOSS REV 245' build/moko.exe || {
+            echo 'Boss revision marker missing from executable';
             find build -maxdepth 2 -type f -print;
             exit 1;
           }
@@ -52,11 +57,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO visual revision 241\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO boss gameplay revision 245\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-rev241-run${{ github.run_number }}
+          name: MOKO-PS1-boss245-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
