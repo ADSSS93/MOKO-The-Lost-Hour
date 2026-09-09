@@ -14,6 +14,8 @@ typedef struct {
     uint8_t socket[4];
     uint8_t charge;
     uint8_t phase;
+    uint8_t boss_hp;
+    uint8_t boss_flash;
     int phase_timer;
     int sweep_tick;
     int stability;
@@ -24,6 +26,9 @@ void finale_reset(MokoFinale *f);
 void finale_begin(MokoFinale *f,int shards);
 int finale_activate_socket(MokoFinale *f,int index,int shards);
 void finale_tick(MokoFinale *f,int dashing);
+int finale_boss_hit(MokoFinale *f);
+int finale_boss_x(const MokoFinale *f);
+int finale_boss_y(const MokoFinale *f);
 int finale_sweep_x(const MokoFinale *f);
 int finale_sweep_y(const MokoFinale *f);
 int finale_hazard_active(const MokoFinale *f);
