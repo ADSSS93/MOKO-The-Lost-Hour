@@ -22,6 +22,8 @@ static void clear_progress(MokoSave *save){
     save->quest_ap=0;
 }
 
+void moko_save_refresh(MokoSave *save){save->checksum=0;save->checksum=moko_save_checksum(save);}
+
 void moko_save_defaults(MokoSave *save){
     save->magic=MOKO_SAVE_MAGIC;
     save->version=MOKO_SAVE_VERSION;
@@ -42,15 +44,13 @@ void moko_save_defaults(MokoSave *save){
     save->checkpoint_score=0;
     save->checkpoint_time=0;
     clear_progress(save);
-    save->checksum=moko_save_checksum(save);
+    moko_save_refresh(save);
 }
 
 int moko_save_validate(const MokoSave *save){
     if(save->magic!=MOKO_SAVE_MAGIC||save->version!=MOKO_SAVE_VERSION)return 0;
     return save->checksum==moko_save_checksum(save);
 }
-
-static void refresh(MokoSave *save){save->checksum=0;save->checksum=moko_save_checksum(save);}
 
 void moko_save_record_clear(MokoSave *save,int score,int combo,int echoes,int deaths){
     if(!moko_save_validate(save))moko_save_defaults(save);
@@ -59,7 +59,7 @@ void moko_save_record_clear(MokoSave *save,int score,int combo,int echoes,int de
     if(combo>(int)save->best_combo)save->best_combo=(uint16_t)combo;
     if(echoes>(int)save->best_echoes)save->best_echoes=(uint16_t)echoes;
     if(deaths<(int)save->best_deaths)save->best_deaths=(uint16_t)deaths;
-    refresh(save);
+    moko_save_refresh(save);
 }
 
 void moko_save_set_checkpoint(MokoSave *save,int room,int shards,int score,int timer,uint8_t puzzle_mask,uint8_t shard_mask,uint8_t echo_mask,uint8_t switch_mask){
@@ -73,7 +73,7 @@ void moko_save_set_checkpoint(MokoSave *save,int room,int shards,int score,int t
     save->shard_mask=shard_mask;
     save->echo_mask=echo_mask;
     save->switch_mask=switch_mask;
-    refresh(save);
+    moko_save_refresh(save);
 }
 
 void moko_save_clear_checkpoint(MokoSave *save){
@@ -88,5 +88,5 @@ void moko_save_clear_checkpoint(MokoSave *save){
     save->echo_mask=0;
     save->switch_mask=0;
     clear_progress(save);
-    refresh(save);
+    moko_save_refresh(save);
 }
