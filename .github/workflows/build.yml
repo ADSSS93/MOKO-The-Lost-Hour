@@ -36,6 +36,14 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
+      - name: Verify visual revision is compiled
+        run: |
+          grep -a -q 'VISUAL REV 241' build/moko || grep -a -q 'VISUAL REV 241' build/moko.exe || {
+            echo 'Visual revision marker missing from executable';
+            find build -maxdepth 2 -type f -print;
+            exit 1;
+          }
+
       - name: Collect disc image
         run: |
           mkdir -p dist
@@ -44,10 +52,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          ls -lh dist/MOKO.bin dist/MOKO.cue
+          printf 'MOKO visual revision 241\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1
+          name: MOKO-PS1-rev241-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
