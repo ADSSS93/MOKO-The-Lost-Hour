@@ -39,15 +39,18 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify gameplay revision is compiled
+      - name: Verify delivery and persistence revision is compiled
         run: |
-          grep -a -q 'MISSION REV 253' build/moko || grep -a -q 'MISSION REV 253' build/moko.exe || {
-            echo 'Mission polish revision marker missing from executable';
+          grep -a -q 'DELIVERY REV 254' build/moko || grep -a -q 'DELIVERY REV 254' build/moko.exe || {
+            echo 'Delivery revision marker missing from executable';
             find build -maxdepth 2 -type f -print;
             exit 1;
           }
-          grep -a -q 'OBJECTIVE: ACTIVATE BOTH TIME SWITCHES' build/moko || grep -a -q 'OBJECTIVE: ACTIVATE BOTH TIME SWITCHES' build/moko.exe || {
-            echo 'Mission objective text missing from executable'; exit 1;
+          grep -a -q 'DELIVERY: SOAKED LETTER -> ELI' build/moko || grep -a -q 'DELIVERY: SOAKED LETTER -> ELI' build/moko.exe || {
+            echo 'Playable delivery guidance missing from executable'; exit 1;
+          }
+          grep -a -q 'PROGRESS SAVED' build/moko || grep -a -q 'PROGRESS SAVED' build/moko.exe || {
+            echo 'Extended save feedback missing from executable'; exit 1;
           }
           grep -a -q 'TRIANGLE - CONTINUE' build/moko || grep -a -q 'TRIANGLE - CONTINUE' build/moko.exe || {
             echo 'Continue menu missing from executable'; exit 1;
@@ -61,11 +64,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO mission-guidance revision 253\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO delivery/persistence revision 254\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-mission253-run${{ github.run_number }}
+          name: MOKO-PS1-delivery254-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
