@@ -21,8 +21,11 @@ src = src.replace(needle, replacement, 1)
 anchor = 'static void reset_game(void)'
 helpers = r'''static void reset_game(void);
 static uint8_t mask4(const uint8_t*v){int i;uint8_t m=0;for(i=0;i<4;i++)if(v[i])m|=(uint8_t)(1u<<i);return m;}
-static void persist_checkpoint(void){uint8_t sm=(switch_a?1:0)|(switch_b?2:0);moko_save_set_checkpoint(&profile,checkpoint_room,shards,checkpoint_score,checkpoint_time,mask4(puzzle_done),mask4(shard_taken),mask4(echo_seen),sm);if(moko_memcard_store(&profile)){profile_loaded=1;save_notice=150;}else save_notice=90;}
-static void continue_game(void){int i;reset_game();for(i=0;i<4;i++){puzzle_done[i]=(profile.puzzle_mask>>i)&1;shard_taken[i]=(profile.shard_mask>>i)&1;echo_seen[i]=(profile.echo_mask>>i)&1;}switch_a=profile.switch_mask&1;switch_b=(profile.switch_mask>>1)&1;shards=profile.checkpoint_shards;checkpoint_room=profile.checkpoint_room;checkpoint_score=(int)profile.checkpoint_score;checkpoint_time=(int)profile.checkpoint_time;room=checkpoint_room;score=checkpoint_score;timer_frames=checkpoint_time>1800?checkpoint_time:1800;px=20;py=190;health=3;invuln=90;area_banner=120;gameplay_reset(&gameplay);for(i=0;i<shards;i++)gameplay_record_shard(&gameplay);for(i=0;i<4;i++)if(echo_seen[i])gameplay_record_echo(&gameplay);adventure_reset(&adventure);for(i=0;i<4;i++){if(shard_taken[i])adventure_story_progress(&adventure,16,1);if(echo_seen[i])adventure_story_progress(&adventure,17,1);}if(puzzle_done[0])adventure_story_clear(&adventure,1);if(switch_a)adventure_story_progress(&adventure,4,1);if(switch_b)adventure_story_progress(&adventure,4,1);if(puzzle_done[2])adventure_story_clear(&adventure,8);if(puzzle_done[3])adventure_story_clear(&adventure,12);world_runtime_reset(&living,room);living.enemies.e[12].active=0;living.enemies.e[12].hp=0;moko_audio_set_room(room);state=STATE_PLAY;sfx(0x2600);save_notice=120;}
+static void snapshot_adventure(void){int i;for(i=0;i<MOKO_SAVE_ITEMS;i++)profile.inventory[i]=adventure.inventory.count[i];for(i=0;i<MOKO_SAVE_NPCS;i++){profile.npc_met[i]=adventure.npc_met[i];profile.npc_delivered[i]=adventure.npc_delivered[i];}for(i=0;i<MOKO_SAVE_EVENTS;i++)profile.world_collected[i]=adventure.world.collected[i];for(i=0;i<MOKO_SAVE_ROOMS;i++){profile.world_room_visits[i]=adventure.world.room_visits[i];profile.challenge_flags[i]=adventure.challenge_flags[i];}for(i=0;i<MOKO_SAVE_QUESTS;i++){profile.quest_state[i]=adventure.quests.state[i];profile.quest_progress[i]=adventure.quests.progress[i];}profile.quest_ap=adventure.quests.ap;moko_save_refresh(&profile);}
+static void restore_adventure(void){int i;for(i=0;i<MOKO_SAVE_ITEMS;i++)adventure.inventory.count[i]=profile.inventory[i];for(i=0;i<MOKO_SAVE_NPCS;i++){adventure.npc_met[i]=profile.npc_met[i];adventure.npc_delivered[i]=profile.npc_delivered[i];}for(i=0;i<MOKO_SAVE_EVENTS;i++)adventure.world.collected[i]=profile.world_collected[i];for(i=0;i<MOKO_SAVE_ROOMS;i++){adventure.world.room_visits[i]=profile.world_room_visits[i];adventure.challenge_flags[i]=profile.challenge_flags[i];}for(i=0;i<MOKO_SAVE_QUESTS;i++){adventure.quests.state[i]=profile.quest_state[i];adventure.quests.progress[i]=profile.quest_progress[i];}adventure.quests.ap=profile.quest_ap;adventure.current_room=room;adventure_journal_sync(&adventure);}
+static void persist_checkpoint(void){uint8_t sm=(switch_a?1:0)|(switch_b?2:0);moko_save_set_checkpoint(&profile,checkpoint_room,shards,checkpoint_score,checkpoint_time,mask4(puzzle_done),mask4(shard_taken),mask4(echo_seen),sm);snapshot_adventure();if(moko_memcard_store(&profile)){profile_loaded=1;save_notice=150;}else save_notice=90;}
+static void persist_here(void){checkpoint_room=room;checkpoint_score=score;checkpoint_time=timer_frames;persist_checkpoint();}
+static void continue_game(void){int i;reset_game();for(i=0;i<4;i++){puzzle_done[i]=(profile.puzzle_mask>>i)&1;shard_taken[i]=(profile.shard_mask>>i)&1;echo_seen[i]=(profile.echo_mask>>i)&1;}switch_a=profile.switch_mask&1;switch_b=(profile.switch_mask>>1)&1;shards=profile.checkpoint_shards;checkpoint_room=profile.checkpoint_room;checkpoint_score=(int)profile.checkpoint_score;checkpoint_time=(int)profile.checkpoint_time;room=checkpoint_room;score=checkpoint_score;timer_frames=checkpoint_time>1800?checkpoint_time:1800;px=20;py=190;health=3;invuln=90;area_banner=120;gameplay_reset(&gameplay);for(i=0;i<shards;i++)gameplay_record_shard(&gameplay);for(i=0;i<4;i++)if(echo_seen[i])gameplay_record_echo(&gameplay);adventure_reset(&adventure);restore_adventure();world_runtime_reset(&living,room);living.enemies.e[12].active=0;living.enemies.e[12].hp=0;moko_audio_set_room(room);state=STATE_PLAY;sfx(0x2600);save_notice=120;}
 '''
 if anchor not in src: raise SystemExit('reset anchor missing')
 src = src.replace(anchor, helpers + anchor, 1)
@@ -30,6 +33,16 @@ src = src.replace(anchor, helpers + anchor, 1)
 needle = 'checkpoint_time=timer_frames;sfx(0x2400);say(8);'
 replacement = 'checkpoint_time=timer_frames;persist_checkpoint();sfx(0x2400);say(8);'
 if needle not in src: raise SystemExit('checkpoint anchor missing')
+src = src.replace(needle, replacement, 1)
+
+needle = 'if(dialogue_started==2){int reward=adventure_npc_reward(&adventure);score+=reward;gameplay_reward(&gameplay,reward/4);sfx(0x2600);}'
+replacement = 'if(dialogue_started==2){int reward=adventure_npc_reward(&adventure);score+=reward;gameplay_reward(&gameplay,reward/4);persist_here();sfx(0x2600);}'
+if needle not in src: raise SystemExit('NPC delivery save anchor missing')
+src = src.replace(needle, replacement, 1)
+
+needle = 'if(reward){score+=reward>1?reward:25;sfx(0x2200);return;}'
+replacement = 'if(reward){score+=reward>1?reward:25;persist_here();sfx(0x2200);return;}'
+if needle not in src: raise SystemExit('world event save anchor missing')
 src = src.replace(needle, replacement, 1)
 
 needle = 'if(finale_complete(&finale)){adventure_story_clear(&adventure,21);score+=finale_score_bonus(&finale)+timer_frames/60;sfx(0x2f00);state=STATE_ENDING;}'
@@ -46,7 +59,7 @@ if needle not in src: raise SystemExit('title continue anchor missing')
 src = src.replace(needle, replacement, 1)
 
 needle = 'if(adventure.notice_timer>0)FntPrint(font_id,"\\nEVENT CLEAR: %s",adventure_notice(&adventure));'
-replacement = 'if(save_notice>0)FntPrint(font_id,"\\nMEMORY CARD: %s",moko_memcard_available()?"CHECKPOINT SAVED":"SAVE FAILED");if(adventure.notice_timer>0)FntPrint(font_id,"\\nEVENT CLEAR: %s",adventure_notice(&adventure));'
+replacement = 'if(save_notice>0)FntPrint(font_id,"\\nMEMORY CARD: %s",moko_memcard_available()?"PROGRESS SAVED":"SAVE FAILED");if(adventure.notice_timer>0)FntPrint(font_id,"\\nEVENT CLEAR: %s",adventure_notice(&adventure));'
 if needle not in src: raise SystemExit('HUD save notice anchor missing')
 src = src.replace(needle, replacement, 1)
 
