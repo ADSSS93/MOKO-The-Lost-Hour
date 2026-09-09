@@ -11,7 +11,6 @@ static void intro_tile(int x,int y,int w,int h,int r,int g,int b){TILE t;setTile
 static void starfield(int t){int i;for(i=0;i<28;i++){int x=(i*73+t/(2+(i&3)))%320;int y=18+((i*37)%190);int v=45+((i*29+t)&63);intro_tile(x,y,(i%7)==0?2:1,(i%7)==0?2:1,v,v+8,v+20);}}
 static void clock_face(int cx,int cy,int r,int pulse){int i;intro_tile(cx-r,cy-r,r*2,r*2,8,13,27);intro_tile(cx-r+4,cy-r+4,r*2-8,r*2-8,28,39,58);intro_tile(cx-r+8,cy-r+8,r*2-16,r*2-16,10,17,31);for(i=0;i<12;i++){int x=cx+((i%3)-1)*(r-13);int y=cy+(((i/3)%3)-1)*(r-13);intro_tile(x,y,2,2,145,150,165);}intro_tile(cx-2,cy-r+9,4,9,205,185,125);intro_tile(cx-2,cy,4,31,205,185,125);intro_tile(cx,cy-2,27,4,205,185,125);intro_tile(cx-4-pulse,cy-4-pulse,8+pulse*2,8+pulse*2,50,170,195);}
 static void moko_silhouette(int x,int y,int pulse){
-    /* Moko identity: purple cat, pointed ears, chest clock and hand-tail */
     intro_tile(x+7,y+5,26,20,86+pulse*8,48,126+pulse*10);
     intro_tile(x+8,y,8,11,61,31,94);intro_tile(x+25,y,8,11,61,31,94);
     intro_tile(x+10,y+9,20,14,116+pulse*6,66,158+pulse*7);
@@ -21,7 +20,6 @@ static void moko_silhouette(int x,int y,int pulse){
     intro_tile(x+15,y+31,12,12,201,174,106);intro_tile(x+18,y+34,6,6,241,226,172);intro_tile(x+21,y+35,2,5,28,22,31);
     intro_tile(x+5,y+29,7,23,90,45,129);intro_tile(x+30,y+29,7,23,90,45,129);
     intro_tile(x+12,y+54,8,13,52,28,82);intro_tile(x+24,y+54,8,13,52,28,82);
-    /* long tail ending like a clock hand */
     intro_tile(x+34,y+39,13,4,213,62,132);intro_tile(x+44,y+35,4,8,213,62,132);intro_tile(x+46,y+32,3,6,214,176,91);
 }
 static void play_boot_intro(void){
@@ -53,9 +51,14 @@ static void play_boot_intro(void){
 void moko_sprite_init(void){GetTimInfo((const uint32_t *)moko_tim,&moko_image);LoadImage(moko_image.prect,moko_image.paddr);if(moko_image.mode&0x8)LoadImage(moko_image.crect,moko_image.caddr);DrawSync(0);moko_ready=1;play_boot_intro();}
 
 void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_tick,uint32_t *ot,char **next_packet){
-    SPRT *spr;DR_TPAGE *page;TILE *shadow;int moving=(walk_tick>0);int pose=moving?1+((walk_tick/7)&1):0;int frame=(facing?0:3)+pose;int bob=moving?((walk_tick/7)&1):((anim_tick/24)&1);
+    SPRT *spr;DR_TPAGE *page;TILE *shadow,*aura;int moving=(walk_tick>0);int pose=moving?1+((walk_tick/7)&1):0;int frame=(facing?0:3)+pose;int bob=moving?((walk_tick/7)&1):((anim_tick/24)&1);
     if(!moko_ready)return;if(invuln>0&&((anim_tick/3)&1))return;
-    shadow=(TILE*)(*next_packet);setTile(shadow);setXY0(shadow,x+2,y+21);setWH(shadow,13,3);setRGB0(shadow,12,16,25);addPrim(ot+1,shadow);*next_packet+=sizeof(TILE);
-    spr=(SPRT *)(*next_packet);setSprt(spr);setXY0(spr,x,y-bob);setWH(spr,16,24);setUV0(spr,frame*16,0);setRGB0(spr,170,170,170);addPrim(ot,spr);*next_packet+=sizeof(SPRT);
+
+    /* Soft purple aura makes Moko readable against every background. */
+    aura=(TILE*)(*next_packet);setTile(aura);setXY0(aura,x-2,y-bob-2);setWH(aura,28,36);setRGB0(aura,35,16,58);setSemiTrans(aura,1);addPrim(ot+2,aura);*next_packet+=sizeof(TILE);
+
+    shadow=(TILE*)(*next_packet);setTile(shadow);setXY0(shadow,x+3,y+29);setWH(shadow,18,4);setRGB0(shadow,10,12,20);addPrim(ot+1,shadow);*next_packet+=sizeof(TILE);
+
+    spr=(SPRT *)(*next_packet);setSprt(spr);setXY0(spr,x,y-bob);setWH(spr,24,32);setUV0(spr,frame*24,0);setRGB0(spr,255,255,255);addPrim(ot,spr);*next_packet+=sizeof(SPRT);
     page=(DR_TPAGE *)(*next_packet);setDrawTPage(page,0,0,getTPage(2,0,moko_image.prect->x,moko_image.prect->y));addPrim(ot,page);*next_packet+=sizeof(DR_TPAGE);
 }
