@@ -43,8 +43,8 @@ jobs:
 
       - name: Verify gameplay revision is compiled
         run: |
-          grep -a -q 'BOSS REV 245' build/moko || grep -a -q 'BOSS REV 245' build/moko.exe || {
-            echo 'Boss revision marker missing from executable';
+          grep -a -q 'ENEMY REV 249' build/moko || grep -a -q 'ENEMY REV 249' build/moko.exe || {
+            echo 'Enemy visual revision marker missing from executable';
             find build -maxdepth 2 -type f -print;
             exit 1;
           }
@@ -57,11 +57,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO boss gameplay revision 245\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO enemy visual/gameplay revision 249\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-boss245-run${{ github.run_number }}
+          name: MOKO-PS1-enemy249-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
