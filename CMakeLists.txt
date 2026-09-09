@@ -5,13 +5,15 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(MOKO_GENERATED_DIR "${PROJECT_BINARY_DIR}/generated")
 set(MOKO_GENERATED_VISUAL_BASE "${MOKO_GENERATED_DIR}/main_visual_base.c")
+set(MOKO_GENERATED_ENEMY_BASE "${MOKO_GENERATED_DIR}/main_enemy_base.c")
 set(MOKO_GENERATED_MAIN "${MOKO_GENERATED_DIR}/main_visual.c")
 add_custom_command(
     OUTPUT "${MOKO_GENERATED_MAIN}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/src/main.c" "${MOKO_GENERATED_VISUAL_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${MOKO_GENERATED_VISUAL_BASE}" "${MOKO_GENERATED_MAIN}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/src/world3d.h"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${MOKO_GENERATED_VISUAL_BASE}" "${MOKO_GENERATED_ENEMY_BASE}"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${MOKO_GENERATED_ENEMY_BASE}" "${MOKO_GENERATED_MAIN}"
+    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${PROJECT_SOURCE_DIR}/src/world3d.h" "${PROJECT_SOURCE_DIR}/src/save.h"
     VERBATIM
 )
 
