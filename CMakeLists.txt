@@ -19,6 +19,7 @@ set(MOKO_GENERATED_REWIND_BASE "${MOKO_GENERATED_DIR}/main_rewind_base.c")
 set(MOKO_GENERATED_PICKUP_BASE "${MOKO_GENERATED_DIR}/main_pickup_base.c")
 set(MOKO_GENERATED_STORY_BASE "${MOKO_GENERATED_DIR}/main_story_base.c")
 set(MOKO_GENERATED_AUDIO_BASE "${MOKO_GENERATED_DIR}/main_audio_base.c")
+set(MOKO_GENERATED_COMPASS_BASE "${MOKO_GENERATED_DIR}/main_compass_base.c")
 set(MOKO_GENERATED_MAIN "${MOKO_GENERATED_DIR}/main_visual.c")
 add_custom_command(
     OUTPUT "${MOKO_GENERATED_MAIN}"
@@ -38,8 +39,9 @@ add_custom_command(
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_temporal_pickups.py" "${MOKO_GENERATED_REWIND_BASE}" "${MOKO_GENERATED_PICKUP_BASE}"
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_story_setpieces.py" "${MOKO_GENERATED_PICKUP_BASE}" "${MOKO_GENERATED_STORY_BASE}"
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_audio_polish.py" "${MOKO_GENERATED_STORY_BASE}" "${MOKO_GENERATED_AUDIO_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_objective_compass.py" "${MOKO_GENERATED_AUDIO_BASE}" "${MOKO_GENERATED_MAIN}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_clock_guard.py" "${PROJECT_SOURCE_DIR}/tools/inject_memory_clocks.py" "${PROJECT_SOURCE_DIR}/tools/inject_chrono_sentinel.py" "${PROJECT_SOURCE_DIR}/tools/inject_warden_phases.py" "${PROJECT_SOURCE_DIR}/tools/inject_death_rewind.py" "${PROJECT_SOURCE_DIR}/tools/inject_temporal_pickups.py" "${PROJECT_SOURCE_DIR}/tools/inject_story_setpieces.py" "${PROJECT_SOURCE_DIR}/tools/inject_audio_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_objective_compass.py" "${PROJECT_SOURCE_DIR}/src/world3d.h" "${PROJECT_SOURCE_DIR}/src/save.h"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_objective_compass.py" "${MOKO_GENERATED_AUDIO_BASE}" "${MOKO_GENERATED_COMPASS_BASE}"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_title_tutorial.py" "${MOKO_GENERATED_COMPASS_BASE}" "${MOKO_GENERATED_MAIN}"
+    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_clock_guard.py" "${PROJECT_SOURCE_DIR}/tools/inject_memory_clocks.py" "${PROJECT_SOURCE_DIR}/tools/inject_chrono_sentinel.py" "${PROJECT_SOURCE_DIR}/tools/inject_warden_phases.py" "${PROJECT_SOURCE_DIR}/tools/inject_death_rewind.py" "${PROJECT_SOURCE_DIR}/tools/inject_temporal_pickups.py" "${PROJECT_SOURCE_DIR}/tools/inject_story_setpieces.py" "${PROJECT_SOURCE_DIR}/tools/inject_audio_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_objective_compass.py" "${PROJECT_SOURCE_DIR}/tools/inject_title_tutorial.py" "${PROJECT_SOURCE_DIR}/src/world3d.h" "${PROJECT_SOURCE_DIR}/src/save.h"
     VERBATIM
 )
 
