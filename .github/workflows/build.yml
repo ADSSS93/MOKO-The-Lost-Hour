@@ -39,13 +39,15 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify Chrono Sentinel revision is compiled
+      - name: Verify Hour Warden phase revision is compiled
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
-          grep -a -q 'SENTINEL REV 259' "$EXE" || { echo 'Chrono Sentinel revision marker missing'; exit 1; }
-          grep -a -q 'MINIBOSS: CHRONO SENTINEL' "$EXE" || { echo 'Chrono Sentinel HUD missing'; exit 1; }
-          grep -a -q 'SENTINEL DEFEATED - +10 SEC - SHARD UNLOCKED' "$EXE" || { echo 'Chrono Sentinel victory flow missing'; exit 1; }
+          grep -a -q 'WARDEN REV 260' "$EXE" || { echo 'Hour Warden revision marker missing'; exit 1; }
+          grep -a -q 'HOUR WARDEN PHASE' "$EXE" || { echo 'Hour Warden phase HUD missing'; exit 1; }
+          grep -a -q 'TIME BOLTS ONLINE - KEEP MOVING' "$EXE" || { echo 'Hour Warden phase-2 attack missing'; exit 1; }
+          grep -a -q 'WARDEN ENRAGED - FINAL PHASE' "$EXE" || { echo 'Hour Warden phase-3 attack missing'; exit 1; }
+          grep -a -q 'MINIBOSS: CHRONO SENTINEL' "$EXE" || { echo 'Chrono Sentinel regressed'; exit 1; }
           grep -a -q 'REST AT MEMORY CLOCK' "$EXE" || { echo 'Memory Clock interaction regressed'; exit 1; }
           grep -a -q 'SQUARE:GUARD' "$EXE" || { echo 'Clock Guard regressed'; exit 1; }
           grep -a -q 'AREA SECURED - TIME MEMORY RESTORED' "$EXE" || { echo 'Encounter feedback regressed'; exit 1; }
@@ -59,11 +61,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO Chrono Sentinel revision 259\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO Hour Warden phase revision 260\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-sentinel259-run${{ github.run_number }}
+          name: MOKO-PS1-warden260-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
