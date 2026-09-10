@@ -21,7 +21,3 @@ void station_visuals_draw(int tick,uint32_t *ot,char **p){int i,blink=(tick/28)&
  tile(ot,p,2,106,164,26,30,41,55,76);tile(ot,p,1,109,168,20,9,43,91,105);tile(ot,p,1,113,171,12,3,139,210,196);tile(ot,p,1,112,182,14,4,23,28,38);
  for(i=0;i<5;i++){int x=(tick*(i+1)+i*67)%300+10;int y=76+((i*31+tick/3)%88);tile(ot,p,1,x,y,1+(i&1),1+(i&1),65,104,116);}
 }
-
-/* world3d.c is intentionally compiled into this already-linked station module
-   while the project migrates the active gameplay renderer to PS1 GTE 3D. */
-#include "world3d.c"
