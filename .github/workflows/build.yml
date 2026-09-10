@@ -44,6 +44,9 @@ jobs:
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
           test -f build/generated/main_visual.c || { echo 'Generated gameplay source missing'; exit 1; }
+          grep -a -q 'CLOCKWORKS EXPANSION REV 279' "$EXE" || { echo 'Clockworks expansion revision missing'; exit 1; }
+          grep -q 'CHRONO RELAYS %d/3  SENTINEL %s' build/generated/main_visual.c || { echo 'Clockworks objective HUD missing'; exit 1; }
+          grep -q 'shard_taken\[3\]&&clock_relays==3' build/generated/main_visual.c || { echo 'Clockworks progression gate missing'; exit 1; }
           grep -a -q 'FORGOTTEN HOUSE REV 278' "$EXE" || { echo 'Forgotten House revision missing'; exit 1; }
           grep -q 'MEMORY LIGHTS %d/3  HOUND %s' build/generated/main_visual.c || { echo 'Forgotten House mission HUD injection missing'; exit 1; }
           grep -q 'house_lights==3&&house_hound_defeated' build/generated/main_visual.c || { echo 'Forgotten House progression gate missing'; exit 1; }
@@ -79,12 +82,12 @@ jobs:
           BIN_SHA=$(sha256sum dist/MOKO.bin | awk '{print $1}')
           BIN_SIZE=$(stat -c%s dist/MOKO.bin)
           CUE_SHA=$(sha256sum dist/MOKO.cue | awk '{print $1}')
-          printf 'MOKO Forgotten House revision 278\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
+          printf 'MOKO Clockworks expansion revision 279\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
           cat dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-house278-run${{ github.run_number }}
+          name: MOKO-PS1-clockworks279-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
