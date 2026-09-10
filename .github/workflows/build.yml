@@ -39,10 +39,15 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify title tutorial and gameplay revisions are compiled
+      - name: Verify cinematic and gameplay revisions are compiled
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
+          grep -a -q 'CINEMA REV 269' "$EXE" || { echo 'Cinematic revision marker missing'; exit 1; }
+          grep -a -q 'CHAPTER I - THE LAST TRAIN' "$EXE" || { echo 'Station chapter card missing'; exit 1; }
+          grep -a -q 'FINAL CHAPTER - THE LOST HOUR' "$EXE" || { echo 'Clock Chamber chapter card missing'; exit 1; }
+          grep -a -q 'THE HOUR WARDEN AWAKENS' "$EXE" || { echo 'Hour Warden intro missing'; exit 1; }
+          grep -a -q 'SURVIVE ALL THREE PHASES' "$EXE" || { echo 'Boss onboarding missing'; exit 1; }
           grep -a -q 'TITLE REV 268' "$EXE" || { echo 'Title revision marker missing'; exit 1; }
           grep -a -q 'MEMORY LESSON 1/4' "$EXE" || { echo 'Movement onboarding missing'; exit 1; }
           grep -a -q 'MEMORY LESSON 4/4' "$EXE" || { echo 'Clock Guard onboarding missing'; exit 1; }
@@ -71,11 +76,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO title tutorial revision 268\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO cinematic revision 269\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-title268-run${{ github.run_number }}
+          name: MOKO-PS1-cinema269-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
