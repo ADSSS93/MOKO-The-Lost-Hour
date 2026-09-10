@@ -43,7 +43,7 @@ jobs:
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
-          grep -a -q 'FEEL REV 271' "$EXE" || { echo 'Feel overhaul revision missing'; exit 1; }
+          grep -a -q 'FEEL REV 272' "$EXE" || { echo 'Inertial movement revision missing'; exit 1; }
           grep -a -q 'WORLD FX REV 270' "$EXE" || { echo 'Runtime world FX revision missing'; exit 1; }
           grep -a -q 'CINEMA REV 269' "$EXE" || { echo 'Cinematic revision marker missing'; exit 1; }
           grep -a -q 'CHAPTER I - THE LAST TRAIN' "$EXE" || { echo 'Station chapter card missing'; exit 1; }
@@ -71,12 +71,12 @@ jobs:
           BIN_SHA=$(sha256sum dist/MOKO.bin | awk '{print $1}')
           BIN_SIZE=$(stat -c%s dist/MOKO.bin)
           CUE_SHA=$(sha256sum dist/MOKO.cue | awk '{print $1}')
-          printf 'MOKO feel overhaul revision 271\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
+          printf 'MOKO inertial movement revision 272\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
           cat dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-feel271-run${{ github.run_number }}
+          name: MOKO-PS1-feel272-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
