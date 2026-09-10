@@ -50,15 +50,36 @@ static void play_boot_intro(void){
 
 void moko_sprite_init(void){GetTimInfo((const uint32_t *)moko_tim,&moko_image);LoadImage(moko_image.prect,moko_image.paddr);if(moko_image.mode&0x8)LoadImage(moko_image.crect,moko_image.caddr);DrawSync(0);moko_ready=1;play_boot_intro();}
 
+static void add_tile(uint32_t *ot,char **next_packet,int depth,int x,int y,int w,int h,int r,int g,int b){TILE*t=(TILE*)(*next_packet);setTile(t);setXY0(t,x,y);setWH(t,w,h);setRGB0(t,r,g,b);addPrim(ot+depth,t);*next_packet+=sizeof(TILE);}
+
 void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_tick,uint32_t *ot,char **next_packet){
-    SPRT *spr;DR_TPAGE *page;TILE *shadow,*aura;int moving=(walk_tick>0);int pose=moving?1+((walk_tick/7)&1):0;int frame=(facing?0:3)+pose;int bob=moving?((walk_tick/7)&1):((anim_tick/24)&1);
+    SPRT *spr;DR_TPAGE *page;TILE *shadow,*aura;int moving=(walk_tick>0);int pose=moving?1+((walk_tick/7)&1):0;int frame=(facing?0:3)+pose;int bob=moving?((walk_tick/7)&1):((anim_tick/24)&1);int pulse=(anim_tick/6)&3;int tail=(anim_tick/8)&3;int chest_x=x+11,chest_y=y-bob+16;
     if(!moko_ready)return;if(invuln>0&&((anim_tick/3)&1))return;
 
     /* Soft purple aura makes Moko readable against every background. */
-    aura=(TILE*)(*next_packet);setTile(aura);setXY0(aura,x-2,y-bob-2);setWH(aura,28,36);setRGB0(aura,35,16,58);setSemiTrans(aura,1);addPrim(ot+2,aura);*next_packet+=sizeof(TILE);
+    aura=(TILE*)(*next_packet);setTile(aura);setXY0(aura,x-2-pulse/2,y-bob-2-pulse/2);setWH(aura,28+pulse,36+pulse);setRGB0(aura,35+pulse*5,16,58+pulse*7);setSemiTrans(aura,1);addPrim(ot+2,aura);*next_packet+=sizeof(TILE);
 
-    shadow=(TILE*)(*next_packet);setTile(shadow);setXY0(shadow,x+3,y+29);setWH(shadow,18,4);setRGB0(shadow,10,12,20);addPrim(ot+1,shadow);*next_packet+=sizeof(TILE);
+    /* Dynamic shadow compresses while walking, reinforcing the low-poly PS1 bounce. */
+    shadow=(TILE*)(*next_packet);setTile(shadow);setXY0(shadow,x+3+(moving?1:0),y+29);setWH(shadow,moving?16:18,moving?3:4);setRGB0(shadow,10,12,20);addPrim(ot+1,shadow);*next_packet+=sizeof(TILE);
 
     spr=(SPRT *)(*next_packet);setSprt(spr);setXY0(spr,x,y-bob);setWH(spr,24,32);setUV0(spr,frame*24,0);setRGB0(spr,255,255,255);addPrim(ot,spr);*next_packet+=sizeof(SPRT);
     page=(DR_TPAGE *)(*next_packet);setDrawTPage(page,0,0,getTPage(2,0,moko_image.prect->x,moko_image.prect->y));addPrim(ot,page);*next_packet+=sizeof(DR_TPAGE);
+
+    /* Readable identity details layered over the sprite: bright ears, chest clock and clock-hand tail. */
+    add_tile(ot,next_packet,0,x+5,y-bob+1,3,4,174,83,225);add_tile(ot,next_packet,0,x+16,y-bob+1,3,4,174,83,225);
+    add_tile(ot,next_packet,0,chest_x-3,chest_y-3,7,7,207,164,76);add_tile(ot,next_packet,0,chest_x-2,chest_y-2,5,5,246,221,148);
+    add_tile(ot,next_packet,0,chest_x,chest_y-1,1,3,42,28,51);add_tile(ot,next_packet,0,chest_x,chest_y,2+(pulse&1),1,42,28,51);
+    add_tile(ot,next_packet,0,chest_x-4-pulse/2,chest_y-4-pulse/2,9+pulse,1,122,61,173);
+
+    /* Tail behaves like a clock hand: it swings through four angular silhouettes. */
+    if(facing){
+        add_tile(ot,next_packet,0,x+22,y-bob+18,5+tail*2,3,197,58,137);
+        add_tile(ot,next_packet,0,x+26+tail*2,y-bob+15-tail,3,5+tail,220,151,79);
+    }else{
+        add_tile(ot,next_packet,0,x-(3+tail*2),y-bob+18,5+tail*2,3,197,58,137);
+        add_tile(ot,next_packet,0,x-(4+tail*2),y-bob+15-tail,3,5+tail,220,151,79);
+    }
+
+    /* Tiny memory sparks trail movement so Moko never feels visually static. */
+    if(moving){int s=(anim_tick/3)&3;add_tile(ot,next_packet,1,x+(facing?-4:27),y+24-s*2,2,2,113,186,226);if((anim_tick&7)<4)add_tile(ot,next_packet,1,x+(facing?-8:31),y+28,1,1,190,109,231);}
 }
