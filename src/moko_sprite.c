@@ -2,98 +2,11 @@
 #include <psxgpu.h>
 #include "moko_sprite.h"
 #include "intro.h"
-
-extern const uint8_t moko_tim[];
-static TIM_IMAGE moko_image;
-static int moko_ready=0;
-static const char moko_visual_revision[]="MOKO VISUAL REV 282";
-
+extern const uint8_t moko_tim[];static TIM_IMAGE moko_image;static int moko_ready=0;static const char moko_visual_revision[]="MOKO VISUAL REV 284";
 static void intro_tile(int x,int y,int w,int h,int r,int g,int b){TILE t;setTile(&t);setXY0(&t,x,y);setWH(&t,w,h);setRGB0(&t,r,g,b);DrawPrim((const uint32_t*)&t);}
 static void starfield(int t){int i;for(i=0;i<28;i++){int x=(i*73+t/(2+(i&3)))%320;int y=18+((i*37)%190);int v=45+((i*29+t)&63);intro_tile(x,y,(i%7)==0?2:1,(i%7)==0?2:1,v,v+8,v+20);}}
-static void clock_face(int cx,int cy,int r,int pulse){int i;intro_tile(cx-r,cy-r,r*2,r*2,8,13,27);intro_tile(cx-r+4,cy-r+4,r*2-8,r*2-8,28,39,58);intro_tile(cx-r+8,cy-r+8,r*2-16,r*2-16,10,17,31);for(i=0;i<12;i++){int x=cx+((i%3)-1)*(r-13);int y=cy+(((i/3)%3)-1)*(r-13);intro_tile(x,y,2,2,145,150,165);}intro_tile(cx-2,cy-r+9,4,9,205,185,125);intro_tile(cx-2,cy,4,31,205,185,125);intro_tile(cx,cy-2,27,4,205,185,125);intro_tile(cx-4-pulse,cy-4-pulse,8+pulse*2,8+pulse*2,50,170,195);}
-static void moko_silhouette(int x,int y,int pulse){
-    /* Title silhouette mirrors the in-game feline proportions: ears, cheeks, haunches and clock-hand tail. */
-    intro_tile(x+8,y+5,24,18,86+pulse*8,48,126+pulse*10);
-    intro_tile(x+7,y,7,10,61,31,94);intro_tile(x+26,y,7,10,61,31,94);
-    intro_tile(x+4,y+11,4,5,128,73,168);intro_tile(x+32,y+11,4,5,128,73,168);
-    intro_tile(x+11,y+9,18,13,116+pulse*6,66,158+pulse*7);
-    intro_tile(x+13,y+12,4,4,238,242,250);intro_tile(x+24,y+12,4,4,238,242,250);
-    intro_tile(x+20,y+17,3,3,236,80,146);
-    intro_tile(x+11,y+24,20,28,75+pulse*7,38,111+pulse*8);
-    intro_tile(x+8,y+42,26,13,90,45,129);
-    intro_tile(x+15,y+31,12,12,201,174,106);intro_tile(x+18,y+34,6,6,241,226,172);intro_tile(x+21,y+35,2,5,28,22,31);
-    intro_tile(x+5,y+28,7,17,90,45,129);intro_tile(x+30,y+28,7,17,90,45,129);
-    intro_tile(x+8,y+52,10,10,52,28,82);intro_tile(x+24,y+52,10,10,52,28,82);
-    intro_tile(x+34,y+38,12,4,213,62,132);intro_tile(x+43,y+31,4,11,213,62,132);intro_tile(x+45,y+27,3,7,214,176,91);
-}
-static void play_boot_intro(void){
-    MokoIntro in;DRAWENV intro_draw,restore_draw;DISPENV intro_disp;int f,scene,t,pulse,i;
-    intro_reset(&in);SetDefDispEnv(&intro_disp,0,0,320,240);SetDefDrawEnv(&intro_draw,0,0,320,240);SetDefDrawEnv(&restore_draw,0,240,320,240);
-    intro_draw.isbg=1;setRGB0(&intro_draw,2,4,12);PutDispEnv(&intro_disp);PutDrawEnv(&intro_draw);SetDispMask(1);f=FntOpen(16,154,288,76,0,128);
-    while(!intro_done(&in)){
-        scene=intro_scene(&in);t=intro_scene_frame(&in);pulse=(t/7)&3;DrawSync(0);VSync(0);intro_tile(0,0,320,240,2,4,12);starfield(t);
-        if(scene==INTRO_STUDIO){
-            intro_tile(54,61,212,1,35,80,110);intro_tile(54,126,212,1,35,80,110);intro_tile(91,76,138,38,6,13,28);
-            intro_tile(98,82,124,26,22,56+pulse*5,78+pulse*8);intro_tile(103,87,114,16,5,15,27);
-            for(i=0;i<5;i++)intro_tile(106+i*23,91+(i&1)*4,13,3,65,180,205);
-        }else if(scene==INTRO_CLOCK){
-            clock_face(160,91,57,pulse);intro_tile(24,91,70,2,40,85,110);intro_tile(226,91,70,2,40,85,110);
-            if(t>70){intro_tile(157,34,6,114,135+pulse*20,35,60);intro_tile(107,89,106,5,60,135+pulse*15,160+pulse*15);}
-        }else if(scene==INTRO_FRACTURE){
-            clock_face(160,88,49,0);intro_tile(158,25,4,127,175,38,66);intro_tile(89,68,71,3,55,150,180);intro_tile(160,112,78,3,55,150,180);
-            for(i=0;i<9;i++){int fx=(37+i*31+(t*(i%3+1)))%290;int fy=42+((i*43+t/2)%91);intro_tile(fx,fy,3+(i&1),3+(i&1),55+i*14,120+i*8,160+i*7);}
-        }else if(scene==INTRO_MOKO){
-            intro_tile(0,132,320,3,18,50,68);intro_tile(0,135,320,48,5,11,22);moko_silhouette(137,62,pulse);
-            intro_tile(36,45,78,2,38,95,120);intro_tile(206,45,78,2,38,95,120);
-            if(t>70){intro_tile(58,42,204,2,60,155,180);intro_tile(58,146,204,2,60,155,180);}
-        }
-        FntPrint(f,"%s\n%s",intro_title(&in),intro_subtitle(&in));FntFlush(f);DrawSync(0);intro_tick(&in,0);
-    }
-    VSync(0);intro_tile(0,0,320,240,2,4,12);DrawSync(0);PutDrawEnv(&restore_draw);
-}
-
-void moko_sprite_init(void){GetTimInfo((const uint32_t *)moko_tim,&moko_image);LoadImage(moko_image.prect,moko_image.paddr);if(moko_image.mode&0x8)LoadImage(moko_image.crect,moko_image.caddr);DrawSync(0);moko_ready=1;play_boot_intro();}
-
-static void add_tile(uint32_t *ot,char **next_packet,int depth,int x,int y,int w,int h,int r,int g,int b){TILE*t=(TILE*)(*next_packet);setTile(t);setXY0(t,x,y);setWH(t,w,h);setRGB0(t,r,g,b);addPrim(ot+depth,t);*next_packet+=sizeof(TILE);}
-
-void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_tick,uint32_t *ot,char **next_packet){
-    SPRT *spr;DR_TPAGE *page;TILE *shadow;int moving=(walk_tick>0);int pose=moving?1+((walk_tick/7)&1):0;int frame=(facing?0:3)+pose;int bob=moving?((walk_tick/7)&1):((anim_tick/24)&1);int pulse=(anim_tick/6)&3;int tail=(anim_tick/8)&3;int chest_x=x+12,chest_y=y-bob+19;
-    if(!moko_ready)return;if(invuln>0&&((anim_tick/3)&1))return;
-
-    /* No rectangular aura: it made the old sprite read like a robot/block. Small sparks preserve contrast. */
-    if(((anim_tick/5)&3)==0){add_tile(ot,next_packet,2,x-3,y-bob+8,2,2,112,70,168);add_tile(ot,next_packet,2,x+25,y-bob+19,2,2,77,174,216);}
-    if(((anim_tick/7)&3)==2)add_tile(ot,next_packet,2,x+2,y-bob-2,1,3,205,125,229);
-
-    /* Wider, low shadow emphasizes paws/haunches rather than a tall humanoid body. */
-    shadow=(TILE*)(*next_packet);setTile(shadow);setXY0(shadow,x+2+(moving?1:0),y+29);setWH(shadow,moving?19:21,moving?3:4);setRGB0(shadow,10,12,20);addPrim(ot+1,shadow);*next_packet+=sizeof(TILE);
-
-    spr=(SPRT *)(*next_packet);setSprt(spr);setXY0(spr,x,y-bob);setWH(spr,24,32);setUV0(spr,frame*24,0);setRGB0(spr,255,255,255);addPrim(ot,spr);*next_packet+=sizeof(SPRT);
-    page=(DR_TPAGE *)(*next_packet);setDrawTPage(page,0,0,getTPage(2,0,moko_image.prect->x,moko_image.prect->y));addPrim(ot,page);*next_packet+=sizeof(DR_TPAGE);
-
-    /* Feline identity overlays survive texture filtering: ear tips, cheek tufts, whiskers and paws. */
-    add_tile(ot,next_packet,0,x+6,y-bob+1,2,4,190,89,221);add_tile(ot,next_packet,0,x+17,y-bob+1,2,4,190,89,221);
-    add_tile(ot,next_packet,0,x+2,y-bob+10,3,2,145,76,190);add_tile(ot,next_packet,0,x+20,y-bob+10,3,2,145,76,190);
-    if(facing){add_tile(ot,next_packet,0,x+18,y-bob+12,6,1,238,220,245);add_tile(ot,next_packet,0,x+19,y-bob+14,5,1,220,199,235);}
-    else{add_tile(ot,next_packet,0,x,y-bob+12,6,1,238,220,245);add_tile(ot,next_packet,0,x,y-bob+14,5,1,220,199,235);}
-    add_tile(ot,next_packet,0,x+3,y-bob+27,7,3,103,54,150);add_tile(ot,next_packet,0,x+14,y-bob+27,7,3,103,54,150);
-
-    /* Oversized chest clock is the second silhouette cue after the ears. */
-    add_tile(ot,next_packet,0,chest_x-4,chest_y-4,9,9,207,164,76);add_tile(ot,next_packet,0,chest_x-3,chest_y-3,7,7,246,221,148);
-    add_tile(ot,next_packet,0,chest_x,chest_y-2,1,4,42,28,51);add_tile(ot,next_packet,0,chest_x,chest_y,3+(pulse&1),1,42,28,51);
-    if((anim_tick&15)<4){add_tile(ot,next_packet,0,chest_x-5,chest_y-5,2,2,238,225,170);}
-
-    /* Clock-hand tail curls upward and finishes with a gold pointer; attack code layers the swing over this. */
-    if(facing){
-        add_tile(ot,next_packet,0,x+21,y-bob+20,3,7,197,58,137);
-        add_tile(ot,next_packet,0,x+20-tail/2,y-bob+15-tail,3,7,197,58,137);
-        add_tile(ot,next_packet,0,x+19-tail/2,y-bob+12-tail,3,4,220,151,79);
-    }else{
-        add_tile(ot,next_packet,0,x,y-bob+20,3,7,197,58,137);
-        add_tile(ot,next_packet,0,x+1+tail/2,y-bob+15-tail,3,7,197,58,137);
-        add_tile(ot,next_packet,0,x+2+tail/2,y-bob+12-tail,3,4,220,151,79);
-    }
-
-    /* Tiny memory sparks trail locomotion without enclosing Moko in a rectangular effect. */
-    if(moving){int s=(anim_tick/3)&3;add_tile(ot,next_packet,1,x+(facing?-4:27),y+24-s*2,2,2,113,186,226);if((anim_tick&7)<4)add_tile(ot,next_packet,1,x+(facing?-8:31),y+28,1,1,190,109,231);}
-    (void)moko_visual_revision;
-}
+static void moko_silhouette(int x,int y,int p){intro_tile(x+7,y+5,28,20,85+p*7,43,132);intro_tile(x+6,y,8,11,62,28,97);intro_tile(x+28,y,8,11,62,28,97);intro_tile(x+4,y+12,36,12,119,65,163);intro_tile(x+10,y+24,24,30,78,35,118);intro_tile(x+8,y+43,29,14,93,42,137);intro_tile(x+15,y+31,13,13,205,172,101);intro_tile(x+35,y+38,15,4,215,61,137);intro_tile(x+47,y+29,4,13,215,61,137);intro_tile(x+49,y+25,3,7,218,178,87);}
+static void play_boot_intro(void){MokoIntro in;DRAWENV d,r;DISPENV e;int f,s,t,p,i;intro_reset(&in);SetDefDispEnv(&e,0,0,320,240);SetDefDrawEnv(&d,0,0,320,240);SetDefDrawEnv(&r,0,240,320,240);d.isbg=1;setRGB0(&d,2,4,12);PutDispEnv(&e);PutDrawEnv(&d);SetDispMask(1);f=FntOpen(16,154,288,76,0,128);while(!intro_done(&in)){s=intro_scene(&in);t=intro_scene_frame(&in);p=(t/7)&3;DrawSync(0);VSync(0);intro_tile(0,0,320,240,2,4,12);starfield(t);if(s==INTRO_STUDIO){intro_tile(54,61,212,1,35,80,110);intro_tile(91,76,138,38,6,13,28);intro_tile(98,82,124,26,22,56+p*5,78+p*8);}else if(s==INTRO_CLOCK||s==INTRO_FRACTURE){intro_tile(104,38,112,112,18,29,49);intro_tile(112,46,96,96,7,13,28);intro_tile(157,53,6,82,205,185,125);intro_tile(157,91,43,5,205,185,125);for(i=0;i<12;i++)intro_tile(117+(i%4)*28,52+(i/4)*39,2,2,145,150,165);}else if(s==INTRO_MOKO){intro_tile(0,132,320,3,18,50,68);moko_silhouette(134,61,p);}FntPrint(f,"%s\n%s",intro_title(&in),intro_subtitle(&in));FntFlush(f);DrawSync(0);intro_tick(&in,0);}VSync(0);intro_tile(0,0,320,240,2,4,12);DrawSync(0);PutDrawEnv(&r);}
+void moko_sprite_init(void){GetTimInfo((const uint32_t*)moko_tim,&moko_image);LoadImage(moko_image.prect,moko_image.paddr);if(moko_image.mode&8)LoadImage(moko_image.crect,moko_image.caddr);DrawSync(0);moko_ready=1;play_boot_intro();}
+static void tile(uint32_t*ot,char**n,int z,int x,int y,int w,int h,int r,int g,int b){TILE*t=(TILE*)*n;setTile(t);setXY0(t,x,y);setWH(t,w,h);setRGB0(t,r,g,b);addPrim(ot+z,t);*n+=sizeof(TILE);}
+void moko_sprite_draw(int x,int y,int facing,int walk,int inv,int tick,uint32_t*ot,char**n){SPRT*s;DR_TPAGE*p;int moving=walk>0,pose=moving?1+((walk/7)&1):0,frame=(facing?0:3)+pose,bob=moving?((walk/7)&1):((tick/24)&1);if(!moko_ready)return;if(inv>0&&((tick/3)&1))return;tile(ot,n,2,x+2,y+31,25,4,9,10,18);s=(SPRT*)*n;setSprt(s);setXY0(s,x-2,y-bob-2);setWH(s,28,34);setUV0(s,frame*28,0);setRGB0(s,255,255,255);addPrim(ot,s);*n+=sizeof(SPRT);p=(DR_TPAGE*)*n;setDrawTPage(p,0,0,getTPage(2,0,moko_image.prect->x,moko_image.prect->y));addPrim(ot,p);*n+=sizeof(DR_TPAGE);if(moving){int q=(tick/3)&3;tile(ot,n,1,x+(facing?-7:28),y+27-q*2,2,2,105,185,225);}if((tick&15)<3)tile(ot,n,0,x+11,y-bob+17,2,2,248,228,165);(void)moko_visual_revision;}
