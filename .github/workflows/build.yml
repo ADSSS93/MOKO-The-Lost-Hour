@@ -39,10 +39,13 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify objective compass revision is compiled
+      - name: Verify pause and gameplay revisions are compiled
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
+          grep -a -q 'PAUSE REV 267' "$EXE" || { echo 'Pause revision marker missing'; exit 1; }
+          grep -a -q 'MEMORY MAP' "$EXE" || { echo 'Pause memory map missing'; exit 1; }
+          grep -a -q 'Clock Guard slows time drain' "$EXE" || { echo 'Pause controls help missing'; exit 1; }
           grep -a -q 'COMPASS REV 265' "$EXE" || { echo 'Objective compass revision marker missing'; exit 1; }
           grep -a -q 'OBJECTIVE: RESTORE THE STATION SIGNAL' "$EXE" || { echo 'Station objective missing'; exit 1; }
           grep -a -q 'OBJECTIVE: CLAIM THE MEMORY SHARD' "$EXE" || { echo 'Shard objective missing'; exit 1; }
@@ -64,11 +67,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO objective compass revision 265\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO pause revision 267\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-compass265-run${{ github.run_number }}
+          name: MOKO-PS1-pause267-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
