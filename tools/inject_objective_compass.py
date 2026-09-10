@@ -45,7 +45,7 @@ helpers = r'''static void objective_compass_art(void){
         else if(room==2)FntPrint(font_id,"\nOBJECTIVE: OPEN THE MORNING ROOM");
         else FntPrint(font_id,"\nOBJECTIVE: RESTART THE CENTRAL GEAR");
     }else if(room<4&&!shard_taken[room])FntPrint(font_id,"\nOBJECTIVE: CLAIM THE MEMORY SHARD");
-    else if(best>=0&&d)FntPrint(font_id,"\nCOMPASS: %s  DIST %d",d->name,bestd);
+    else if(best>=0&&d)FntPrint(font_id,"\nCOMPASS: %s  DIST %d",d->label,bestd);
     else if(room<4)FntPrint(font_id,"\nAREA MEMORY STABLE - FIND THE EXIT");
     else FntPrint(font_id,"\nOBJECTIVE: HOLD THE LOST HOUR");
     FntPrint(font_id,"\nMEMORIES %d/4  EVENTS %d  AP %d",shards,adventure.world.interactions,adventure.quests.ap);
