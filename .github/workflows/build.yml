@@ -75,7 +75,7 @@ jobs:
           grep -q 'warden_phase_level' build/generated/main_visual.c || { echo 'Hour Warden phase logic regressed'; exit 1; }
           grep -q 'sentinel_active' build/generated/main_visual.c || { echo 'Chrono Sentinel logic regressed'; exit 1; }
           grep -q 'clock_guard_art' build/generated/main_visual.c || { echo 'Clock Guard gameplay regressed'; exit 1; }
-          grep -a -q 'REST AT MEMORY CLOCK' "$EXE" || { echo 'Memory Clock regressed'; exit 1; }
+          grep -q 'memory_clock_near' build/generated/main_visual.c || { echo 'Memory Clock logic regressed'; exit 1; }
           grep -a -q 'TRIANGLE - CONTINUE' "$EXE" || { echo 'Continue menu missing'; exit 1; }
 
       - name: Collect and fingerprint disc image
