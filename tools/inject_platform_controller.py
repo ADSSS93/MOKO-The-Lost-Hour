@@ -3,20 +3,21 @@ import pathlib, re, sys
 src = pathlib.Path(sys.argv[1]).read_text()
 
 # Platform state must exist before draw_moko(), because FEEL REV 272 declares
-# horizontal velocity later near update_play(). Insert the vertical/combat state
-# immediately before the renderer instead of piggybacking on moko_vx.
+# horizontal velocity later near update_play(). Vertical height is fixed-point
+# (16 units = one screen pixel) and can now settle on authored raised surfaces.
 state_anchor = 'static void draw_moko(void)'
-state_block = '''static int moko_z=0,moko_vz=0,moko_grounded=1,moko_coyote=0,moko_jump_buffer=0,moko_tail_timer=0,moko_tail_cooldown=0;\n'''
+state_block = '''static int moko_z=0,moko_vz=0,moko_floor_z=0,moko_grounded=1,moko_coyote=0,moko_jump_buffer=0,moko_tail_timer=0,moko_tail_cooldown=0;\n'''
 if state_anchor not in src:
     raise SystemExit('draw_moko state anchor missing')
 src = src.replace(state_anchor, state_block + state_anchor, 1)
 
-# Replace Moko draw so vertical jump height is visible while the ground shadow stays planted.
+# Replace Moko draw so jump height is visible, with a shadow projected onto the
+# nearest authored landing surface rather than always onto the base floor.
 pat = re.compile(r'static void draw_moko\(void\)\{.*?\}\s*static void draw_shard', re.S)
 rep = r'''static void draw_moko(void){
-    int i,moving=(walk_tick&7)!=0,bob=moving?((walk_tick>>1)&1):((anim_tick/18)&1),jh=moko_z/16;
-    int sw=18+(moving?3:0)-(jh>18?6:jh/3);if(sw<8)sw=8;
-    soft_shadow(px+7,py+19,sw);
+    int i,moving=(walk_tick&7)!=0,bob=moving?((walk_tick>>1)&1):((anim_tick/18)&1),jh=moko_z/16,fh=moko_floor_z/16;
+    int sw=18+(moving?3:0)-((jh-fh)>18?6:(jh-fh)/3);if(sw<8)sw=8;
+    soft_shadow(px+7,py+19-fh,sw);
     if(gameplay.dash_timer>0){for(i=1;i<5;i++){int ox=px-(facing?i*6:-i*6),a=95-i*13;tri(ox,py+8-jh,ox+7,py+3-jh,ox+11,py+12-jh,55,a,135+i*12);}}
     if(moko_tail_timer>0){int sx=facing?px+19:px-7,sy=py+10-jh;tri(px+7,py+11-jh,sx,sy-8,sx+(facing?7:-7),sy+2,188,88,220);tri(px+7,py+12-jh,sx,sy+2,sx+(facing?4:-4),sy+8,116,55,170);}
     moko_sprite_draw(px,py-bob-jh,facing,walk_tick,invuln,anim_tick,db[active].ot,&next_packet);
@@ -25,6 +26,46 @@ rep = r'''static void draw_moko(void){
 src,count = pat.subn(rep,src,count=1)
 if count != 1:
     raise SystemExit('draw_moko jump replacement failed')
+
+# Authored low-poly catwalks. These are intentionally simple PS1 geometry but
+# they are real gameplay surfaces, not decorative rectangles.
+art_anchor = 'static void world_event_art(void)'
+platform_art = r'''static int moko_platform_candidate(void){
+    if(py<154)return 0;
+    if(room==0){if((px>=68&&px<=132)||(px>=184&&px<=246))return 288;}
+    else if(room==1){if(px>=92&&px<=154)return 240;if(px>=232&&px<=294)return 336;}
+    else if(room==2){if(px>=40&&px<=104)return 256;if(px>=164&&px<=224)return 352;}
+    else if(room==3){if(px>=56&&px<=118)return 288;if(px>=205&&px<=274)return 400;}
+    else if(room==4){if(px>=104&&px<=216)return 224;}
+    return 0;
+}
+static void platform_course_art(void){
+    int lift;
+    if(room==0){
+        lift=18; tri(64,196-lift,136,196-lift,132,205-lift,58,70,96);tri(64,196-lift,132,205-lift,68,205-lift,35,43,66);rect(72,190-lift,56,3,126,112,74);
+        tri(180,196-lift,250,196-lift,246,205-lift,54,66,91);tri(180,196-lift,246,205-lift,184,205-lift,32,40,61);rect(188,190-lift,54,3,126,112,74);
+    }else if(room==1){
+        tri(88,190-15,158,190-15,152,202-15,83,39,86);tri(88,190-15,152,202-15,94,202-15,45,21,52);
+        tri(228,190-21,298,190-21,292,202-21,92,42,78);tri(228,190-21,292,202-21,234,202-21,48,22,49);
+    }else if(room==2){
+        tri(36,193-16,108,193-16,102,204-16,46,83,72);tri(36,193-16,102,204-16,42,204-16,26,49,44);
+        tri(160,193-22,228,193-22,222,204-22,52,91,76);tri(160,193-22,222,204-22,166,204-22,29,52,46);
+    }else if(room==3){
+        tri(52,194-18,122,194-18,116,205-18,132,86,30);tri(52,194-18,116,205-18,58,205-18,70,43,15);
+        tri(201,194-25,278,194-25,272,205-25,143,91,32);tri(201,194-25,272,205-25,207,205-25,74,45,16);
+    }else{
+        tri(100,194-14,220,194-14,212,206-14,88,54,67);tri(100,194-14,212,206-14,108,206-14,49,27,38);
+    }
+}
+'''
+if art_anchor not in src:
+    raise SystemExit('platform art anchor missing')
+src = src.replace(art_anchor, platform_art + art_anchor, 1)
+
+# Place gameplay platforms into the real room renderer immediately before Moko.
+if 'draw_moko();}' not in src:
+    raise SystemExit('room draw_moko anchor missing')
+src = src.replace('draw_moko();}', 'platform_course_art();draw_moko();}', 1)
 
 anchor = 'static void update_play(uint16_t n)'
 logic = r'''static int moko_interaction_near(void){
@@ -38,15 +79,23 @@ logic = r'''static int moko_interaction_near(void){
     if(room==2&&hit(px,py,12,18,180,70,55,110))return 1;
     return 0;
 }
+static void moko_land_on(int floor_z){moko_z=floor_z;moko_floor_z=floor_z;moko_vz=0;moko_grounded=1;sfx(0x0d00);}
 static void moko_jump_tick(uint16_t n){
+    int prev_z,candidate;
     if(pressed(n,PAD_CROSS)&&!moko_interaction_near())moko_jump_buffer=6;
-    if(moko_grounded)moko_coyote=6;else if(moko_coyote>0)moko_coyote--;
+    if(moko_grounded){
+        moko_coyote=6;
+        candidate=moko_platform_candidate();
+        if(moko_floor_z>0&&candidate!=moko_floor_z){moko_grounded=0;moko_coyote=6;}
+    }else if(moko_coyote>0)moko_coyote--;
     if(moko_jump_buffer>0)moko_jump_buffer--;
     if(moko_jump_buffer>0&&moko_coyote>0){moko_grounded=0;moko_coyote=0;moko_jump_buffer=0;moko_vz=72;sfx(0x1800);}
     if(!moko_grounded){
         if((n&PAD_CROSS)&&moko_vz>30)moko_vz=30;
-        moko_z+=moko_vz;moko_vz-=5;
-        if(moko_z<=0){moko_z=0;moko_vz=0;moko_grounded=1;sfx(0x0d00);}
+        prev_z=moko_z;moko_z+=moko_vz;moko_vz-=5;
+        candidate=moko_platform_candidate();
+        if(moko_vz<=0&&candidate>0&&prev_z>=candidate&&moko_z<=candidate){moko_land_on(candidate);}
+        else if(moko_z<=0){moko_land_on(0);}
     }
 }
 static void moko_tail_tick(uint16_t n){
@@ -55,7 +104,7 @@ static void moko_tail_tick(uint16_t n){
     if(pressed(n,PAD_CIRCLE)&&moko_tail_cooldown==0){moko_tail_timer=10;moko_tail_cooldown=18;sfx(0x2100);}
     if(moko_tail_timer==7){if(world_runtime_dash(&living,room,px,py,facing?1:-1)>=0){score+=35;gameplay_reward(&gameplay,15);sfx(0x2600);}}
 }
-static int moko_airborne_safe(void){return moko_z>=160;}
+static int moko_airborne_safe(void){return (moko_z-moko_floor_z)>=160;}
 '''
 if anchor not in src:
     raise SystemExit('update_play anchor missing')
@@ -73,9 +122,9 @@ src = src.replace('if(room==2&&hit(px,py,12,18,190,hy(),8,18))hurt();','if(room=
 src = src.replace('if(room==3&&(hit(px,py,12,18,90,184,45,18)||hit(px,py,12,18,hx(),160,20,6)))hurt();','if(room==3&&!moko_airborne_safe()&&(hit(px,py,12,18,90,184,45,18)||hit(px,py,12,18,hx(),160,20,6)))hurt();',1)
 
 # Reset vertical state on forced reposition and room transitions.
-src = src.replace('health--;score=score>=25?score-25:0;invuln=60;', 'health--;score=score>=25?score-25:0;invuln=60;moko_z=0;moko_vz=0;moko_grounded=1;',1)
-src = src.replace('room--;px=306;moko_vx=0;moko_vy=0;', 'room--;px=306;moko_vx=0;moko_vy=0;moko_z=0;moko_vz=0;moko_grounded=1;',1)
-src = src.replace('room++;px=2;moko_vx=0;moko_vy=0;', 'room++;px=2;moko_vx=0;moko_vy=0;moko_z=0;moko_vz=0;moko_grounded=1;',1)
+src = src.replace('health--;score=score>=25?score-25:0;invuln=60;', 'health--;score=score>=25?score-25:0;invuln=60;moko_z=0;moko_vz=0;moko_floor_z=0;moko_grounded=1;',1)
+src = src.replace('room--;px=306;moko_vx=0;moko_vy=0;', 'room--;px=306;moko_vx=0;moko_vy=0;moko_z=0;moko_vz=0;moko_floor_z=0;moko_grounded=1;',1)
+src = src.replace('room++;px=2;moko_vx=0;moko_vy=0;', 'room++;px=2;moko_vx=0;moko_vy=0;moko_z=0;moko_vz=0;moko_floor_z=0;moko_grounded=1;',1)
 
 # Contextual HUD: Cross remains interaction near objects; otherwise it is the jump button.
 src = src.replace('R1:DASH SELECT:JOURNAL EV%d%%', 'R1:DASH CIRCLE:TAIL CROSS:JUMP EV%d%%', 1)
@@ -83,6 +132,6 @@ src = src.replace('R1:DASH SELECT:JOURNAL EV%d%%', 'R1:DASH CIRCLE:TAIL CROSS:JU
 marker='FEEL REV 272'
 if marker not in src:
     raise SystemExit('feel marker missing')
-src=src.replace(marker,'PLATFORM REV 273  FEEL REV 272',1)
+src=src.replace(marker,'PLATFORM REV 274  FEEL REV 272',1)
 
 pathlib.Path(sys.argv[2]).write_text(src)
