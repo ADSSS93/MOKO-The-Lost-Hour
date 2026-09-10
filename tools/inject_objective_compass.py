@@ -9,7 +9,6 @@ anchor = 'static int warden_phase_level(void)'
 helpers = r'''static void objective_compass_art(void){
     int i,best=-1,bestd=9999,dx=0,dy=0,p=(anim_tick/8)&3;
     const MokoWorldEventDef*d=0;
-    /* Find the closest real, unlocked objective/event in the current playable room. */
     for(i=0;i<MOKO_WORLD_EVENT_COUNT;i++){
         const MokoWorldEventDef*e=adventure_event(&adventure,i);
         int ex,ey,dist;
@@ -46,6 +45,45 @@ helpers = r'''static void objective_compass_art(void){
     else if(room<4)FntPrint(font_id,"\nAREA MEMORY STABLE - FIND THE EXIT");
     else FntPrint(font_id,"\nOBJECTIVE: HOLD THE LOST HOUR");
     FntPrint(font_id,"\nMEMORIES %d/4  EVENTS %d  AP %d",shards,adventure.world.interactions,adventure.quests.ap);
+}
+static int pause_tab=0;
+static const char*pause_area_name(void){
+    static const char*n[]={"SILENT STATION","BACKWARD STREET","HOUSE WITHOUT MORNING","CLOCKWORKS","CLOCK CHAMBER"};
+    return n[room];
+}
+static void pause_objective_text(void){
+    int near=adventure_near_event(&adventure,room,px,py,999);
+    if(room<4&&!puzzle_done[room]){
+        if(room==0)FntPrint(journal_font_id,"Restore the station signal.");
+        else if(room==1)FntPrint(journal_font_id,"Activate both red switches.");
+        else if(room==2)FntPrint(journal_font_id,"Open the Morning Room.");
+        else FntPrint(journal_font_id,"Restart the Central Gear.");
+    }else if(room<4&&!shard_taken[room])FntPrint(journal_font_id,"Claim the Memory Shard.");
+    else if(near>=0){const MokoWorldEventDef*d=adventure_event(&adventure,near);if(d)FntPrint(journal_font_id,"Follow memory: %s",d->label);}
+    else if(room<4)FntPrint(journal_font_id,"Memory stable. Find the exit.");
+    else FntPrint(journal_font_id,"Survive the Hour Warden.");
+}
+static void pause_menu_art(void){
+    int i,p=(anim_tick/10)&3,complete=adventure_completion(&adventure);
+    rect(12,20,296,204,4,7,17);rect(16,24,288,26,18,24,45);rect(16,54,288,166,9,12,27);
+    rect(21+pause_tab*92,47,78,4,126,71,173);
+    for(i=0;i<4;i++){int x=224+i*17;rect(x,30,12,12,24,48,62);if(shard_taken[i]){rect(x+2,32,8,8,85,211,233);rect(x+4,30-p,4,3+p,183,246,251);}}
+    FntPrint(journal_font_id,"PAUSE  |  STATUS     CONTROLS     MEMORY\n\n");
+    if(pause_tab==0){
+        FntPrint(journal_font_id,"AREA  %s\n\nOBJECTIVE\n",pause_area_name());pause_objective_text();
+        FntPrint(journal_font_id,"\n\nHP %d/3     FOCUS %d/100\nSHARDS %d/4  SCORE %d\nEVENTS %d%%   AP %d\nBEST COMBO x%d",health,gameplay.focus,shards,score,complete,adventure.quests.ap,gameplay.best_combo);
+        rect(35,184,250,7,28,31,49);rect(35,184,(250*complete)/100,7,84,173,193);
+    }else if(pause_tab==1){
+        FntPrint(journal_font_id,"CONTROLS\n\nD-PAD    MOVE MOKO\nCROSS    INTERACT / CONFIRM\nR1       MEMORY DASH\nSQUARE   CLOCK GUARD\nSELECT   MEMORY JOURNAL\nSTART    RESUME\n\nClock Guard slows time drain.\nMemory Dash breaks temporal threats.");
+    }else{
+        FntPrint(journal_font_id,"MEMORY MAP\n\n");
+        for(i=0;i<4;i++){
+            const char*name=i==0?"STATION":i==1?"STREET":i==2?"HOUSE":"CLOCKWORKS";
+            FntPrint(journal_font_id,"%d  %-10s  SHARD %s  PUZZLE %s\n",i+1,name,shard_taken[i]?"YES":"--",puzzle_done[i]?"CLEAR":"OPEN");
+        }
+        FntPrint(journal_font_id,"\nCURRENT AREA EVENTS LEFT %d\nTOTAL COMPLETION %d%%\n\nFour memories unlock the Clock Chamber.",world_events_remaining(&adventure.world,room),complete);
+    }
+    FntPrint(journal_font_id,"\n\nLEFT/RIGHT TAB   SELECT JOURNAL\nSTART/CIRCLE RESUME   PAUSE REV 267");
 }
 static int epilogue_tick=0;
 static void epilogue_clock(int cx,int cy,int radius,int tick){
@@ -121,6 +159,18 @@ credits_replacement = r'''}else{
 src, count = credits_pattern.subn(lambda _m: credits_replacement, src, count=1)
 if count != 1:
     raise SystemExit('credits anchor missing')
+
+pause_pattern = re.compile(r'}else if\(state==STATE_PAUSE\)\{room_art\(\);.*?if\(pressed\(n,PAD_START\)\)state=STATE_PLAY;\}', re.S)
+pause_replacement = r'''}else if(state==STATE_PAUSE){
+    room_art();pause_menu_art();FntFlush(journal_font_id);
+    if(pressed(n,PAD_LEFT)){pause_tab=(pause_tab+2)%3;sfx(0x0d00);}
+    if(pressed(n,PAD_RIGHT)){pause_tab=(pause_tab+1)%3;sfx(0x0d00);}
+    if(pressed(n,PAD_SELECT)){adventure_journal_sync(&adventure);state=STATE_JOURNAL;sfx(0x1200);}
+    if(pressed(n,PAD_START)||pressed(n,PAD_CIRCLE)){state=STATE_PLAY;sfx(0x0d00);}
+}'''
+src, count = pause_pattern.subn(lambda _m: pause_replacement, src, count=1)
+if count != 1:
+    raise SystemExit('pause menu anchor missing')
 
 src = src.replace('AUDIO REV 264','COMPASS REV 265',1)
 src = src.replace('A264 %02d:%02d','O265 %02d:%02d',1)
