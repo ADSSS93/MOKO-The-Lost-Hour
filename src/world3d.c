@@ -1,10 +1,97 @@
+#include <stdint.h>
 #include <psxgpu.h>
 #include <psxgte.h>
+#include <inline_c.h>
 #include "world3d.h"
-typedef struct{short x,y,z;}V3;static MATRIX cam;static int ready=0;
-static void tri3(uint32_t*ot,char**pk,int d,V3 a,V3 b,V3 c,int r,int g,int bl){POLY_F3*p=(POLY_F3*)*pk;VECTOR va={a.x,a.y,a.z,0},vb={b.x,b.y,b.z,0},vc={c.x,c.y,c.z,0};long s0,s1,s2,flag;setPolyF3(p);setRGB0(p,r,g,bl);gte_ldv3(&va,&vb,&vc);gte_rtpt();gte_stsxy0(&s0);gte_stsxy1(&s1);gte_stsxy2(&s2);gte_stflg(&flag);if(!(flag&0x80000000)){setXY3(p,(short)s0,(short)(s0>>16),(short)s1,(short)(s1>>16),(short)s2,(short)(s2>>16));addPrim(ot+d,p);*pk+=sizeof(POLY_F3);}}
-static void quad(uint32_t*ot,char**pk,int d,V3 a,V3 b,V3 c,V3 e,int r,int g,int bl){POLY_F4*p=(POLY_F4*)*pk;VECTOR va={a.x,a.y,a.z,0},vb={b.x,b.y,b.z,0},vc={c.x,c.y,c.z,0},ve={e.x,e.y,e.z,0};long s0,s1,s2,s3,flag;setPolyF4(p);setRGB0(p,r,g,bl);gte_ldv3(&va,&vb,&vc);gte_rtpt();gte_stsxy0(&s0);gte_stsxy1(&s1);gte_stsxy2(&s2);gte_ldv0(&ve);gte_rtps();gte_stsxy(&s3);gte_stflg(&flag);if(!(flag&0x80000000)){setXY4(p,(short)s0,(short)(s0>>16),(short)s1,(short)(s1>>16),(short)s2,(short)(s2>>16),(short)s3,(short)(s3>>16));addPrim(ot+d,p);*pk+=sizeof(POLY_F4);}}
-static void box(uint32_t*ot,char**pk,int x,int y,int z,int w,int h,int dep,int r,int g,int b){V3 a={x,y,z},bb={x+w,y,z},c={x+w,y+h,z},d={x,y+h,z},e={x,y,z+dep},f={x+w,y,z+dep},gg={x+w,y+h,z+dep},hh={x,y+h,z+dep};quad(ot,pk,4,a,bb,c,d,r,g,b);quad(ot,pk,4,e,hh,gg,f,r-10,g-10,b-10);quad(ot,pk,3,a,e,f,bb,r+10,g+10,b+10);quad(ot,pk,3,d,c,gg,hh,r-18,g-18,b-18);quad(ot,pk,3,a,d,hh,e,r-12,g-12,b-12);quad(ot,pk,3,bb,f,gg,c,r-5,g-5,b-5);}
-void world3d_init(void){VECTOR t={0,35,0,0};SVECTOR rot={180,0,0,0};RotMatrix(&rot,&cam);TransMatrix(&cam,&t);SetGeomOffset(160,116);SetGeomScreen(235);ready=1;}
-static void moko3d(uint32_t*ot,char**pk,int mx,int mz,int facing,int tick){int bob=((tick/7)&1)*5;int dir=facing?1:-1;/* body */box(ot,pk,mx-34,72-bob,mz,68,78,58,102,55,153);box(ot,pk,mx-43,25-bob,mz+4,86,58,62,137,78,184);/* muzzle */box(ot,pk,mx-24,49-bob,mz-8,48,21,22,205,178,202);/* ears */tri3(ot,pk,2,(V3){mx-38,27-bob,mz+8},(V3){mx-17,-26-bob,mz+14},(V3){mx-5,29-bob,mz+8},92,42,139);tri3(ot,pk,2,(V3){mx+5,29-bob,mz+8},(V3){mx+17,-26-bob,mz+14},(V3){mx+38,27-bob,mz+8},92,42,139);tri3(ot,pk,1,(V3){mx-31,23-bob,mz+5},(V3){mx-18,-15-bob,mz+10},(V3){mx-9,24-bob,mz+5},213,91,157);tri3(ot,pk,1,(V3){mx+9,24-bob,mz+5},(V3){mx+18,-15-bob,mz+10},(V3){mx+31,23-bob,mz+5},213,91,157);/* paws / haunches */box(ot,pk,mx-42,143-bob,mz+4,29,30,44,68,35,110);box(ot,pk,mx+13,143-bob,mz+4,29,30,44,68,35,110);box(ot,pk,mx-46,168-bob,mz-4,35,16,56,44,27,77);box(ot,pk,mx+11,168-bob,mz-4,35,16,56,44,27,77);/* chest clock */box(ot,pk,mx-18,99-bob,mz-10,36,34,10,204,164,77);box(ot,pk,mx-11,106-bob,mz-13,22,20,7,239,222,154);box(ot,pk,mx-2,109-bob,mz-16,4,13,5,32,27,42);box(ot,pk,mx,119-bob,mz-16,12,4,5,32,27,42);/* clock-hand tail */box(ot,pk,mx+dir*34,112-bob,mz+17,dir*28,8,8,208,60,137);box(ot,pk,mx+dir*58,76-bob,mz+17,8,43,8,208,60,137);tri3(ot,pk,1,(V3){mx+dir*62,64-bob,mz+13},(V3){mx+dir*72,79-bob,mz+13},(V3){mx+dir*54,79-bob,mz+13},221,177,87);}
-void world3d_draw_station(int px,int py,int facing,int tick,uint32_t*ot,char**pk){int i;VECTOR t;int camx=(px-160)*3;int mx=(px-160)*4,mz=760+(202-py)*7;if(!ready)world3d_init();t.vx=-camx;t.vy=30;t.vz=-120;TransMatrix(&cam,&t);SetRotMatrix(&cam);SetTransMatrix(&cam);/* floor and back wall */quad(ot,pk,7,(V3){-900,190,420},(V3){-900,190,2100},(V3){900,190,2100},(V3){900,190,420},38,35,44);quad(ot,pk,7,(V3){-900,-430,1980},(V3){900,-430,1980},(V3){900,190,1980},(V3){-900,190,1980},16,22,38);/* rails */for(i=0;i<9;i++)box(ot,pk,-850+i*215,178,470,118,9,1420,58,50,43);for(i=0;i<3;i++)box(ot,pk,-820,180,610+i*390,1640,10,20,105,86,59);/* columns and lamps */for(i=0;i<8;i++){int x=-780+i*220;box(ot,pk,x,-320,1830,34,500,55,54,58,71);box(ot,pk,x-34,-335,1800,102,22,88,82,72,89);box(ot,pk,x-13,-365,1802,60,27,82,192,159,88);}/* platforms / benches */box(ot,pk,-720,104,940,570,54,520,76,65,55);box(ot,pk,180,104,1160,500,54,360,76,65,55);box(ot,pk,-650,45,1370,260,62,150,63,58,62);box(ot,pk,275,45,1370,260,62,150,63,58,62);/* destination clock */box(ot,pk,-65,-275,1880,130,130,22,84,57,104);box(ot,pk,-48,-258,1855,96,96,18,191,170,111);box(ot,pk,-6,-245,1848,12,62,8,36,29,38);box(ot,pk,0,-188,1848,44,10,8,36,29,38);moko3d(ot,pk,mx,mz,facing,tick);}
+
+typedef struct { short x,y,z; } V3;
+static MATRIX cam;
+static int ready=0;
+
+static void tri3(uint32_t *ot,char **pk,int d,V3 a,V3 b,V3 c,int r,int g,int bl){
+    POLY_F3 *p=(POLY_F3*)*pk;
+    SVECTOR va={a.x,a.y,a.z,0},vb={b.x,b.y,b.z,0},vc={c.x,c.y,c.z,0};
+    int32_t s0,s1,s2,flag;
+    setPolyF3(p);setRGB0(p,r,g,bl);
+    gte_ldv3(&va,&vb,&vc);gte_rtpt();
+    gte_stsxy0(&s0);gte_stsxy1(&s1);gte_stsxy2(&s2);gte_stflg(&flag);
+    if(!(flag&0x80000000)){
+        setXY3(p,(short)s0,(short)(s0>>16),(short)s1,(short)(s1>>16),(short)s2,(short)(s2>>16));
+        addPrim(ot+d,p);*pk+=sizeof(POLY_F3);
+    }
+}
+
+static void quad(uint32_t *ot,char **pk,int d,V3 a,V3 b,V3 c,V3 e,int r,int g,int bl){
+    POLY_F4 *p=(POLY_F4*)*pk;
+    SVECTOR va={a.x,a.y,a.z,0},vb={b.x,b.y,b.z,0},vc={c.x,c.y,c.z,0},ve={e.x,e.y,e.z,0};
+    int32_t s0,s1,s2,s3,flag;
+    setPolyF4(p);setRGB0(p,r,g,bl);
+    gte_ldv3(&va,&vb,&vc);gte_rtpt();
+    gte_stsxy0(&s0);gte_stsxy1(&s1);gte_stsxy2(&s2);
+    gte_ldv0(&ve);gte_rtps();gte_stsxy(&s3);gte_stflg(&flag);
+    if(!(flag&0x80000000)){
+        setXY4(p,(short)s0,(short)(s0>>16),(short)s1,(short)(s1>>16),(short)s2,(short)(s2>>16),(short)s3,(short)(s3>>16));
+        addPrim(ot+d,p);*pk+=sizeof(POLY_F4);
+    }
+}
+
+static int shade(int v){return v<0?0:(v>255?255:v);}
+static void box(uint32_t *ot,char **pk,int x,int y,int z,int w,int h,int dep,int r,int g,int b){
+    V3 a={x,y,z},bb={x+w,y,z},c={x+w,y+h,z},d={x,y+h,z};
+    V3 e={x,y,z+dep},f={x+w,y,z+dep},gg={x+w,y+h,z+dep},hh={x,y+h,z+dep};
+    quad(ot,pk,4,a,bb,c,d,r,g,b);
+    quad(ot,pk,4,e,hh,gg,f,shade(r-10),shade(g-10),shade(b-10));
+    quad(ot,pk,3,a,e,f,bb,shade(r+10),shade(g+10),shade(b+10));
+    quad(ot,pk,3,d,c,gg,hh,shade(r-18),shade(g-18),shade(b-18));
+    quad(ot,pk,3,a,d,hh,e,shade(r-12),shade(g-12),shade(b-12));
+    quad(ot,pk,3,bb,f,gg,c,shade(r-5),shade(g-5),shade(b-5));
+}
+
+void world3d_init(void){
+    VECTOR t;
+    SVECTOR rot={180,0,0,0};
+    t.vx=0;t.vy=35;t.vz=0;
+    InitGeom();
+    RotMatrix(&rot,&cam);TransMatrix(&cam,&t);
+    gte_SetGeomOffset(160,116);gte_SetGeomScreen(235);
+    ready=1;
+}
+
+static void moko3d(uint32_t *ot,char **pk,int mx,int mz,int facing,int tick){
+    int bob=((tick/7)&1)*5;int dir=facing?1:-1;
+    box(ot,pk,mx-34,72-bob,mz,68,78,58,102,55,153);
+    box(ot,pk,mx-43,25-bob,mz+4,86,58,62,137,78,184);
+    box(ot,pk,mx-24,49-bob,mz-8,48,21,22,205,178,202);
+    tri3(ot,pk,2,(V3){mx-38,27-bob,mz+8},(V3){mx-17,-26-bob,mz+14},(V3){mx-5,29-bob,mz+8},92,42,139);
+    tri3(ot,pk,2,(V3){mx+5,29-bob,mz+8},(V3){mx+17,-26-bob,mz+14},(V3){mx+38,27-bob,mz+8},92,42,139);
+    tri3(ot,pk,1,(V3){mx-31,23-bob,mz+5},(V3){mx-18,-15-bob,mz+10},(V3){mx-9,24-bob,mz+5},213,91,157);
+    tri3(ot,pk,1,(V3){mx+9,24-bob,mz+5},(V3){mx+18,-15-bob,mz+10},(V3){mx+31,23-bob,mz+5},213,91,157);
+    box(ot,pk,mx-42,143-bob,mz+4,29,30,44,68,35,110);
+    box(ot,pk,mx+13,143-bob,mz+4,29,30,44,68,35,110);
+    box(ot,pk,mx-46,168-bob,mz-4,35,16,56,44,27,77);
+    box(ot,pk,mx+11,168-bob,mz-4,35,16,56,44,27,77);
+    box(ot,pk,mx-18,99-bob,mz-10,36,34,10,204,164,77);
+    box(ot,pk,mx-11,106-bob,mz-13,22,20,7,239,222,154);
+    box(ot,pk,mx-2,109-bob,mz-16,4,13,5,32,27,42);
+    box(ot,pk,mx,119-bob,mz-16,12,4,5,32,27,42);
+    box(ot,pk,mx+dir*34,112-bob,mz+17,dir*28,8,8,208,60,137);
+    box(ot,pk,mx+dir*58,76-bob,mz+17,8,43,8,208,60,137);
+    tri3(ot,pk,1,(V3){mx+dir*62,64-bob,mz+13},(V3){mx+dir*72,79-bob,mz+13},(V3){mx+dir*54,79-bob,mz+13},221,177,87);
+}
+
+void world3d_draw_station(int px,int py,int facing,int tick,uint32_t *ot,char **pk){
+    int i;VECTOR t;int camx=(px-160)*3;int mx=(px-160)*4,mz=760+(202-py)*7;
+    if(!ready)world3d_init();
+    t.vx=-camx;t.vy=30;t.vz=-120;
+    TransMatrix(&cam,&t);gte_SetRotMatrix(&cam);gte_SetTransMatrix(&cam);
+    quad(ot,pk,7,(V3){-900,190,420},(V3){-900,190,2100},(V3){900,190,2100},(V3){900,190,420},38,35,44);
+    quad(ot,pk,7,(V3){-900,-430,1980},(V3){900,-430,1980},(V3){900,190,1980},(V3){-900,190,1980},16,22,38);
+    for(i=0;i<9;i++)box(ot,pk,-850+i*215,178,470,118,9,1420,58,50,43);
+    for(i=0;i<3;i++)box(ot,pk,-820,180,610+i*390,1640,10,20,105,86,59);
+    for(i=0;i<8;i++){int x=-780+i*220;box(ot,pk,x,-320,1830,34,500,55,54,58,71);box(ot,pk,x-34,-335,1800,102,22,88,82,72,89);box(ot,pk,x-13,-365,1802,60,27,82,192,159,88);}
+    box(ot,pk,-720,104,940,570,54,520,76,65,55);box(ot,pk,180,104,1160,500,54,360,76,65,55);
+    box(ot,pk,-650,45,1370,260,62,150,63,58,62);box(ot,pk,275,45,1370,260,62,150,63,58,62);
+    box(ot,pk,-65,-275,1880,130,130,22,84,57,104);box(ot,pk,-48,-258,1855,96,96,18,191,170,111);
+    box(ot,pk,-6,-245,1848,12,62,8,36,29,38);box(ot,pk,0,-188,1848,44,10,8,36,29,38);
+    moko3d(ot,pk,mx,mz,facing,tick);
+}
