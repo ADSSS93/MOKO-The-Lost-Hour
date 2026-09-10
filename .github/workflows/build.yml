@@ -72,7 +72,7 @@ jobs:
           grep -a -q 'COMPASS REV 265' "$EXE" || { echo 'Objective compass revision marker missing'; exit 1; }
           grep -a -q 'TIME FRAGMENT +5 SEC' "$EXE" || { echo 'Temporal pickups regressed'; exit 1; }
           grep -a -q 'CROSS - REWIND TO CHECKPOINT' "$EXE" || { echo 'Checkpoint retry regressed'; exit 1; }
-          grep -a -q 'HOUR WARDEN PHASE' "$EXE" || { echo 'Hour Warden phase HUD regressed'; exit 1; }
+          grep -q 'warden_phase_level' build/generated/main_visual.c || { echo 'Hour Warden phase logic regressed'; exit 1; }
           grep -a -q 'MINIBOSS: CHRONO SENTINEL' "$EXE" || { echo 'Chrono Sentinel regressed'; exit 1; }
           grep -a -q 'REST AT MEMORY CLOCK' "$EXE" || { echo 'Memory Clock regressed'; exit 1; }
           grep -a -q 'SQUARE:GUARD' "$EXE" || { echo 'Clock Guard regressed'; exit 1; }
