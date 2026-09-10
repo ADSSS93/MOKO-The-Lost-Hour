@@ -43,8 +43,10 @@ jobs:
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
+          test -f build/generated/main_visual.c || { echo 'Generated gameplay source missing'; exit 1; }
           grep -a -q 'FORGOTTEN HOUSE REV 278' "$EXE" || { echo 'Forgotten House revision missing'; exit 1; }
-          grep -a -q 'MEMORY LIGHTS %d/3' "$EXE" || { echo 'Forgotten House mission HUD missing'; exit 1; }
+          grep -q 'MEMORY LIGHTS %d/3  HOUND %s' build/generated/main_visual.c || { echo 'Forgotten House mission HUD injection missing'; exit 1; }
+          grep -q 'house_lights==3&&house_hound_defeated' build/generated/main_visual.c || { echo 'Forgotten House progression gate missing'; exit 1; }
           grep -a -q 'BACKWARD STREET REV 277' "$EXE" || { echo 'Backward Street revision missing'; exit 1; }
           grep -a -q 'STATION LEVEL REV 276' "$EXE" || { echo 'Silent Station traversal revision missing'; exit 1; }
           grep -a -q 'CAMERA REV 275' "$EXE" || { echo 'Scrolling camera revision missing'; exit 1; }
