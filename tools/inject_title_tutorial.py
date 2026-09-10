@@ -42,9 +42,9 @@ static void title_screen_art(void){
     rect(68,191+title_choice*14,184,12,49,31,69);
     if(title_choice==0)rect(72,194,5,5,213,158,235);else rect(72,208,5,5,213,158,235);
     FntPrint(journal_font_id," M O K O :  T H E  L O S T  H O U R\n\n\n\n\n\n\n\n\n\n\n\n       %s NEW GAME\n       %s CONTINUE\n\n",title_choice==0?">":" ",title_choice==1?">":" ");
-    if(can_continue)FntPrint(journal_font_id," CARD: SHARDS %d/4  BEST %lu  CLEARS %lu\n",profile.checkpoint_shards,(unsigned long)profile.best_score,(unsigned long)profile.clears);
+    if(can_continue)FntPrint(journal_font_id," CARD: SHARDS %d/4  BEST %lu  CLEARS %lu\n TRIANGLE - CONTINUE\n",profile.checkpoint_shards,(unsigned long)profile.best_score,(unsigned long)profile.clears);
     else FntPrint(journal_font_id," CARD: NO CHECKPOINT - BEGIN A NEW MEMORY\n");
-    FntPrint(journal_font_id," UP/DOWN SELECT  CROSS CONFIRM   TITLE REV 268");
+    FntPrint(journal_font_id," UP/DOWN SELECT  CROSS CONFIRM\n TITLE REV 268  COMPASS REV 265");
 }
 static void tutorial_input(uint16_t n){
     if(!(n&PAD_LEFT)||!(n&PAD_RIGHT)||!(n&PAD_UP)||!(n&PAD_DOWN))tutorial_flags|=1;
