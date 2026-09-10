@@ -39,10 +39,14 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify pause and gameplay revisions are compiled
+      - name: Verify title tutorial and gameplay revisions are compiled
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
+          grep -a -q 'TITLE REV 268' "$EXE" || { echo 'Title revision marker missing'; exit 1; }
+          grep -a -q 'MEMORY LESSON 1/4' "$EXE" || { echo 'Movement onboarding missing'; exit 1; }
+          grep -a -q 'MEMORY LESSON 4/4' "$EXE" || { echo 'Clock Guard onboarding missing'; exit 1; }
+          grep -a -q 'UP/DOWN SELECT  CROSS CONFIRM' "$EXE" || { echo 'Title menu controls missing'; exit 1; }
           grep -a -q 'PAUSE REV 267' "$EXE" || { echo 'Pause revision marker missing'; exit 1; }
           grep -a -q 'MEMORY MAP' "$EXE" || { echo 'Pause memory map missing'; exit 1; }
           grep -a -q 'Clock Guard slows time drain' "$EXE" || { echo 'Pause controls help missing'; exit 1; }
@@ -67,11 +71,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO pause revision 267\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO title tutorial revision 268\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-pause267-run${{ github.run_number }}
+          name: MOKO-PS1-title268-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
