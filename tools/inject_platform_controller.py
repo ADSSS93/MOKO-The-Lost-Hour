@@ -2,11 +2,14 @@ import pathlib, re, sys
 
 src = pathlib.Path(sys.argv[1]).read_text()
 
-state_anchor = 'static int moko_vx=0,moko_vy=0;'
-state_block = '''static int moko_vx=0,moko_vy=0;\nstatic int moko_z=0,moko_vz=0,moko_grounded=1,moko_coyote=0,moko_jump_buffer=0,moko_tail_timer=0,moko_tail_cooldown=0;'''
+# Platform state must exist before draw_moko(), because FEEL REV 272 declares
+# horizontal velocity later near update_play(). Insert the vertical/combat state
+# immediately before the renderer instead of piggybacking on moko_vx.
+state_anchor = 'static void draw_moko(void)'
+state_block = '''static int moko_z=0,moko_vz=0,moko_grounded=1,moko_coyote=0,moko_jump_buffer=0,moko_tail_timer=0,moko_tail_cooldown=0;\n'''
 if state_anchor not in src:
-    raise SystemExit('movement state anchor missing')
-src = src.replace(state_anchor, state_block, 1)
+    raise SystemExit('draw_moko state anchor missing')
+src = src.replace(state_anchor, state_block + state_anchor, 1)
 
 # Replace Moko draw so vertical jump height is visible while the ground shadow stays planted.
 pat = re.compile(r'static void draw_moko\(void\)\{.*?\}\s*static void draw_shard', re.S)
