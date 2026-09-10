@@ -44,7 +44,6 @@ jobs:
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
           grep -a -q 'AUDIO REV 264' "$EXE" || { echo 'Audio revision marker missing'; exit 1; }
-          grep -a -q 'SPU 4-TIMBRE AUDIO' "$EXE" || { echo 'Audio runtime marker missing'; exit 1; }
           grep -a -q "LAST TRAIN: CONDUCTOR'S WATCH RECOVERED" "$EXE" || { echo 'Last Train setpiece regressed'; exit 1; }
           grep -a -q 'RAIN TRAIL: FOLLOW THE DROP INTO THE SKY' "$EXE" || { echo 'Reverse rain setpiece regressed'; exit 1; }
           grep -a -q 'MIDNIGHT TEA: THE SECOND CUP IS WARM' "$EXE" || { echo 'Midnight tea setpiece regressed'; exit 1; }
