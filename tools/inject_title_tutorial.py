@@ -8,7 +8,7 @@ if 'PAUSE REV 267' not in src or 'COMPASS REV 265' not in src:
 state_anchor = 'static void reset_game(void);'
 if state_anchor not in src:
     raise SystemExit('title/tutorial state anchor missing')
-src = src.replace(state_anchor, 'static int title_choice=0,title_tick=0;\nstatic uint8_t tutorial_flags=0;\n' + state_anchor, 1)
+src = src.replace(state_anchor, 'static int title_choice=0,title_tick=0;\nstatic uint8_t tutorial_flags=0;\nstatic int cinematic_room=-1,cinematic_tick=0,boss_intro_tick=0,boss_intro_seen=0;\n' + state_anchor, 1)
 
 anchor = 'static int warden_phase_level(void)'
 helpers = r'''static void title_clock_art(int cx,int cy){
@@ -46,6 +46,56 @@ static void title_screen_art(void){
     else FntPrint(journal_font_id," CARD: NO CHECKPOINT - BEGIN A NEW MEMORY\n");
     FntPrint(journal_font_id," UP/DOWN SELECT  CROSS CONFIRM\n TITLE REV 268  COMPASS REV 265");
 }
+static const char* cinematic_area_name(int r){
+    if(r==0)return "SILENT STATION";
+    if(r==1)return "BACKWARD STREET";
+    if(r==2)return "HOUSE WITHOUT MORNING";
+    if(r==3)return "CLOCKWORKS";
+    return "CLOCK CHAMBER";
+}
+static const char* cinematic_area_subtitle(int r){
+    if(r==0)return "CHAPTER I - THE LAST TRAIN";
+    if(r==1)return "CHAPTER II - WHERE RAIN RISES";
+    if(r==2)return "CHAPTER III - MIDNIGHT TEA";
+    if(r==3)return "CHAPTER IV - THE HIDDEN BELL";
+    return "FINAL CHAPTER - THE LOST HOUR";
+}
+static void cinematic_clock(int cx,int cy,int phase){
+    int p=(anim_tick/7)&3;
+    rect(cx-23,cy-23,46,46,24,20,43);rect(cx-19,cy-19,38,38,91,53,115);rect(cx-15,cy-15,30,30,9,12,28);
+    rect(cx-1,cy-1,3,3,238,199,112);
+    if(phase&1){rect(cx,cy-1,13,3,205,146,232);rect(cx-1,cy-12,3,12,205,146,232);}
+    else{rect(cx-12,cy-1,12,3,205,146,232);rect(cx-1,cy,3,13,205,146,232);}
+    rect(cx-28-p,cy-2-p,4+p*2,4+p*2,75,195,220);rect(cx+24-p,cy+8-p,4+p*2,4+p*2,175,86,215);
+}
+static void cinematic_area_art(uint16_t n){
+    int fade,p=(anim_tick/8)&3;
+    if(cinematic_tick<=0)return;
+    if(pressed(n,PAD_CROSS)||pressed(n,PAD_START))cinematic_tick=1;
+    fade=cinematic_tick>80?cinematic_tick-80:0;
+    rect(0,0,320,54,4,5,14);rect(0,186,320,54,4,5,14);
+    rect(18,62,284,116,8+fade/8,9,22+fade/5);rect(22,66,276,108,18,15,35);
+    cinematic_clock(160,105,p);
+    if(room==4){rect(44,145,232,4,88,35,58);rect(70,151,180,2,185,78,115);}
+    FntPrint(journal_font_id,"\n\n\n\n\n\n\n\n\n       %s\n       %s\n\n       CROSS / START - SKIP\n       CINEMA REV 269",cinematic_area_name(room),cinematic_area_subtitle(room));
+    cinematic_tick--;
+}
+static void boss_intro_art(uint16_t n){
+    int p=(anim_tick/6)&3,bx=160;
+    if(boss_intro_tick<=0)return;
+    if(pressed(n,PAD_CROSS)||pressed(n,PAD_START))boss_intro_tick=1;
+    rect(0,0,320,240,8,4,12);rect(0,27,320,6,82,25,45);rect(0,205,320,6,82,25,45);
+    rect(bx-36,72,72,72,30,12,28);rect(bx-30,78,60,60,94,37,69);rect(bx-24,84,48,48,22,8,22);
+    rect(bx-3,87,6,42,218,147,87);rect(bx-18,105,36,5,218,147,87);
+    rect(bx-41-p,103-p,8+p*2,8+p*2,168,63,101);rect(bx+33-p,103-p,8+p*2,8+p*2,168,63,101);
+    rect(72,157,176,7,35,22,39);rect(75,159,170,3,205,72,92);
+    FntPrint(journal_font_id,"\n       THE HOUR WARDEN AWAKENS\n\n\n\n\n\n\n\n\n\n\n       6 HP  -  MEMORY DASH TO STRIKE\n       CLOCK GUARD BLOCKS TEMPORAL HITS\n       SURVIVE ALL THREE PHASES\n\n       CROSS / START - SKIP\n       BOSS INTRO - CINEMA REV 269");
+    boss_intro_tick--;
+}
+static void cinematic_detect(void){
+    if(room!=cinematic_room){cinematic_room=room;cinematic_tick=105;sfx(0x1900);}
+    if(finale.phase==FINALE_STABILIZE&&!boss_intro_seen){boss_intro_seen=1;boss_intro_tick=125;sfx(0x2800);}
+}
 static void tutorial_input(uint16_t n){
     if(!(n&PAD_LEFT)||!(n&PAD_RIGHT)||!(n&PAD_UP)||!(n&PAD_DOWN))tutorial_flags|=1;
     if(pressed(n,PAD_CROSS))tutorial_flags|=2;
@@ -71,16 +121,22 @@ src = src.replace(anchor, helpers + anchor, 1)
 reset_anchor = 'static void reset_game(void){int i;px=20;py=190;room=0;'
 if reset_anchor not in src:
     raise SystemExit('new game tutorial reset anchor missing')
-src = src.replace(reset_anchor, 'static void reset_game(void){int i;tutorial_flags=0;px=20;py=190;room=0;', 1)
+src = src.replace(reset_anchor, 'static void reset_game(void){int i;tutorial_flags=0;cinematic_room=0;cinematic_tick=105;boss_intro_tick=0;boss_intro_seen=0;px=20;py=190;room=0;', 1)
 continue_anchor = 'static void continue_game(void){int i;reset_game();'
 if continue_anchor not in src:
     raise SystemExit('continue tutorial anchor missing')
-src = src.replace(continue_anchor, 'static void continue_game(void){int i;reset_game();tutorial_flags=15;', 1)
+src = src.replace(continue_anchor, 'static void continue_game(void){int i;reset_game();tutorial_flags=15;cinematic_tick=0;cinematic_room=-1;', 1)
 
 play_anchor = '}else if(state==STATE_PLAY){update_play(n);room_art();hud();}'
 if play_anchor not in src:
     raise SystemExit('play tutorial hook missing')
-src = src.replace(play_anchor, '}else if(state==STATE_PLAY){tutorial_input(n);update_play(n);room_art();hud();tutorial_art();}', 1)
+play_replacement = r'''}else if(state==STATE_PLAY){
+    tutorial_input(n);cinematic_detect();
+    if(cinematic_tick>0){room_art();hud();cinematic_area_art(n);}
+    else if(boss_intro_tick>0){room_art();hud();boss_intro_art(n);}
+    else{update_play(n);cinematic_detect();room_art();hud();if(cinematic_tick>0)cinematic_area_art(n);else if(boss_intro_tick>0)boss_intro_art(n);else tutorial_art();}
+}'''
+src = src.replace(play_anchor, play_replacement, 1)
 
 title_pattern = re.compile(r'if\(state==STATE_TITLE\)\{.*?\}else if\(state==STATE_PLAY\)', re.S)
 title_replacement = r'''if(state==STATE_TITLE){
