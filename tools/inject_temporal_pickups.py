@@ -7,7 +7,7 @@ replacement = needle + 'static uint16_t temporal_pickup_mask=0;static int tempor
 if needle not in src: raise SystemExit('temporal pickup globals anchor missing')
 src = src.replace(needle, replacement, 1)
 
-needle = 'death_rewind_tick=0;'
+needle = 'warden_attack_tick=0;warden_attack_flash=0;warden_phase_notice=0;death_rewind_tick=0;'
 replacement = needle + 'temporal_pickup_mask=0;temporal_pickup_notice=0;temporal_pickup_kind=0;'
 if needle not in src: raise SystemExit('temporal pickup reset anchor missing')
 src = src.replace(needle, replacement, 1)
