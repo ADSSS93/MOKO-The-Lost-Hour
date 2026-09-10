@@ -4,4 +4,5 @@
 #include <psxgpu.h>
 void world3d_init(void);
 void world3d_draw_station(int player_x,int player_y,int facing,int tick,uint32_t *ot,char **packet);
+void world3d_draw_village(int player_x,int player_y,int facing,int tick,int motes,int enemy_hp,int clear,uint32_t *ot,char **packet);
 #endif
