@@ -10,6 +10,7 @@ set(MOKO_GENERATED_SAVE_BASE "${MOKO_GENERATED_DIR}/main_save_base.c")
 set(MOKO_GENERATED_MISSION_BASE "${MOKO_GENERATED_DIR}/main_mission_base.c")
 set(MOKO_GENERATED_DELIVERY_BASE "${MOKO_GENERATED_DIR}/main_delivery_base.c")
 set(MOKO_GENERATED_COMBAT_BASE "${MOKO_GENERATED_DIR}/main_combat_base.c")
+set(MOKO_GENERATED_ENCOUNTER_BASE "${MOKO_GENERATED_DIR}/main_encounter_base.c")
 set(MOKO_GENERATED_MAIN "${MOKO_GENERATED_DIR}/main_visual.c")
 add_custom_command(
     OUTPUT "${MOKO_GENERATED_MAIN}"
@@ -20,8 +21,9 @@ add_custom_command(
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${MOKO_GENERATED_SAVE_BASE}" "${MOKO_GENERATED_MISSION_BASE}"
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${MOKO_GENERATED_MISSION_BASE}" "${MOKO_GENERATED_DELIVERY_BASE}"
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${MOKO_GENERATED_DELIVERY_BASE}" "${MOKO_GENERATED_COMBAT_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${MOKO_GENERATED_COMBAT_BASE}" "${MOKO_GENERATED_MAIN}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${PROJECT_SOURCE_DIR}/src/world3d.h" "${PROJECT_SOURCE_DIR}/src/save.h"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${MOKO_GENERATED_COMBAT_BASE}" "${MOKO_GENERATED_ENCOUNTER_BASE}"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_clock_guard.py" "${MOKO_GENERATED_ENCOUNTER_BASE}" "${MOKO_GENERATED_MAIN}"
+    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_clock_guard.py" "${PROJECT_SOURCE_DIR}/src/world3d.h" "${PROJECT_SOURCE_DIR}/src/save.h"
     VERBATIM
 )
 
