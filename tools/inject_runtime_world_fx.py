@@ -56,6 +56,6 @@ for old,new in hooks:
 marker = 'TITLE REV 268  COMPASS REV 265'
 if marker not in src:
     raise SystemExit('runtime world fx title marker anchor missing')
-src = src.replace(marker, 'TITLE REV 268  WORLD FX REV 270', 1)
+src = src.replace(marker, 'TITLE REV 268  COMPASS REV 265  WORLD FX REV 270', 1)
 
 pathlib.Path(sys.argv[2]).write_text(src)
