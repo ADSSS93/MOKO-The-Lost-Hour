@@ -39,14 +39,15 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify Hour Warden phase revision is compiled
+      - name: Verify death rewind revision is compiled
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
-          grep -a -q 'WARDEN REV 260' "$EXE" || { echo 'Hour Warden revision marker missing'; exit 1; }
-          grep -a -q 'HOUR WARDEN PHASE' "$EXE" || { echo 'Hour Warden phase HUD missing'; exit 1; }
-          grep -a -q 'TIME BOLTS ONLINE - KEEP MOVING' "$EXE" || { echo 'Hour Warden phase-2 attack missing'; exit 1; }
-          grep -a -q 'WARDEN ENRAGED - FINAL PHASE' "$EXE" || { echo 'Hour Warden phase-3 attack missing'; exit 1; }
+          grep -a -q 'REWIND REV 261' "$EXE" || { echo 'Death rewind revision marker missing'; exit 1; }
+          grep -a -q 'THE HOUR SHATTERED' "$EXE" || { echo 'Death rewind presentation missing'; exit 1; }
+          grep -a -q 'CROSS - REWIND TO CHECKPOINT' "$EXE" || { echo 'Checkpoint retry flow missing'; exit 1; }
+          grep -a -q 'MEMORY CARD CHECKPOINT - SHARDS' "$EXE" || { echo 'Persistent checkpoint retry missing'; exit 1; }
+          grep -a -q 'HOUR WARDEN PHASE' "$EXE" || { echo 'Hour Warden phase HUD regressed'; exit 1; }
           grep -a -q 'MINIBOSS: CHRONO SENTINEL' "$EXE" || { echo 'Chrono Sentinel regressed'; exit 1; }
           grep -a -q 'REST AT MEMORY CLOCK' "$EXE" || { echo 'Memory Clock interaction regressed'; exit 1; }
           grep -a -q 'SQUARE:GUARD' "$EXE" || { echo 'Clock Guard regressed'; exit 1; }
@@ -61,11 +62,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO Hour Warden phase revision 260\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO death rewind revision 261\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-warden260-run${{ github.run_number }}
+          name: MOKO-PS1-rewind261-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
