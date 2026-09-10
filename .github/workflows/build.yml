@@ -39,13 +39,14 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify guard revision is compiled
+      - name: Verify Memory Clock revision is compiled
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
-          grep -a -q 'GUARD REV 257' "$EXE" || { echo 'Guard revision marker missing'; exit 1; }
-          grep -a -q 'SQUARE:GUARD' "$EXE" || { echo 'Clock Guard controls missing'; exit 1; }
-          grep -a -q 'CLOCK GUARD' "$EXE" || { echo 'Clock Guard HUD status missing'; exit 1; }
+          grep -a -q 'CLOCK REV 258' "$EXE" || { echo 'Memory Clock revision marker missing'; exit 1; }
+          grep -a -q 'REST AT MEMORY CLOCK' "$EXE" || { echo 'Memory Clock interaction missing'; exit 1; }
+          grep -a -q 'TIME RESTORED + SAVED' "$EXE" || { echo 'Memory Clock restore feedback missing'; exit 1; }
+          grep -a -q 'SQUARE:GUARD' "$EXE" || { echo 'Clock Guard regressed'; exit 1; }
           grep -a -q 'AREA SECURED - TIME MEMORY RESTORED' "$EXE" || { echo 'Encounter feedback regressed'; exit 1; }
           grep -a -q 'TRIANGLE - CONTINUE' "$EXE" || { echo 'Continue menu missing'; exit 1; }
 
@@ -57,11 +58,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO guard revision 257\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO Memory Clock revision 258\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-guard257-run${{ github.run_number }}
+          name: MOKO-PS1-clock258-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
