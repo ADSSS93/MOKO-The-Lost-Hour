@@ -6,7 +6,7 @@ src = pathlib.Path(sys.argv[1]).read_text()
 # horizontal velocity later near update_play(). Vertical height is fixed-point
 # (16 units = one screen pixel) and can now settle on authored raised surfaces.
 state_anchor = 'static void draw_moko(void)'
-state_block = '''static int moko_z=0,moko_vz=0,moko_floor_z=0,moko_grounded=1,moko_coyote=0,moko_jump_buffer=0,moko_tail_timer=0,moko_tail_cooldown=0;\n'''
+state_block = '''static int moko_z=0,moko_vz=0,moko_floor_z=0,moko_grounded=1,moko_coyote=0,moko_jump_buffer=0,moko_tail_timer=0,moko_tail_cooldown=0;\nstatic void platform_course_art(void);\n'''
 if state_anchor not in src:
     raise SystemExit('draw_moko state anchor missing')
 src = src.replace(state_anchor, state_block + state_anchor, 1)
@@ -17,6 +17,7 @@ pat = re.compile(r'static void draw_moko\(void\)\{.*?\}\s*static void draw_shard
 rep = r'''static void draw_moko(void){
     int i,moving=(walk_tick&7)!=0,bob=moving?((walk_tick>>1)&1):((anim_tick/18)&1),jh=moko_z/16,fh=moko_floor_z/16;
     int sw=18+(moving?3:0)-((jh-fh)>18?6:(jh-fh)/3);if(sw<8)sw=8;
+    platform_course_art();
     soft_shadow(px+7,py+19-fh,sw);
     if(gameplay.dash_timer>0){for(i=1;i<5;i++){int ox=px-(facing?i*6:-i*6),a=95-i*13;tri(ox,py+8-jh,ox+7,py+3-jh,ox+11,py+12-jh,55,a,135+i*12);}}
     if(moko_tail_timer>0){int sx=facing?px+19:px-7,sy=py+10-jh;tri(px+7,py+11-jh,sx,sy-8,sx+(facing?7:-7),sy+2,188,88,220);tri(px+7,py+12-jh,sx,sy+2,sx+(facing?4:-4),sy+8,116,55,170);}
@@ -61,11 +62,6 @@ static void platform_course_art(void){
 if art_anchor not in src:
     raise SystemExit('platform art anchor missing')
 src = src.replace(art_anchor, platform_art + art_anchor, 1)
-
-# Place gameplay platforms into the real room renderer immediately before Moko.
-if 'draw_moko();}' not in src:
-    raise SystemExit('room draw_moko anchor missing')
-src = src.replace('draw_moko();}', 'platform_course_art();draw_moko();}', 1)
 
 anchor = 'static void update_play(uint16_t n)'
 logic = r'''static int moko_interaction_near(void){
