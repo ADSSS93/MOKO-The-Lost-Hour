@@ -24,7 +24,7 @@ jobs:
           curl -fL --retry 4 --retry-delay 3 \
             https://github.com/Lameguy64/PSn00bSDK/releases/download/v0.24/PSn00bSDK-0.24-Linux.zip \
             -o /tmp/psn00bsdk.zip
-          unzip -q /tmp/psn00bsdk.zip -d /tmp/psn00b-release
+          unzip -q /tmp/psn00b-release /tmp/psn00bsdk.zip 2>/dev/null || unzip -q /tmp/psn00bsdk.zip -d /tmp/psn00b-release
           SDK_DIR=$(find /tmp/psn00b-release -maxdepth 1 -type d -name 'PSn00bSDK-*-Linux' | head -1)
           test -n "$SDK_DIR"
           cp -a "$SDK_DIR"/. /opt/psn00bsdk/
@@ -44,6 +44,12 @@ jobs:
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
           test -f build/generated/main_visual.c || { echo 'Generated gameplay source missing'; exit 1; }
+          grep -q 'REAL 3D VERTICAL SLICE REV 288' build/generated/main_visual.c || { echo '3D depth/jump slice missing'; exit 1; }
+          grep -q 'world3d_draw_village(px,py,moko_z/16' build/generated/main_visual.c || { echo '3D jump state not wired'; exit 1; }
+          grep -q 'ONE MINUTE SLICE REV 288' build/generated/main_visual.c || { echo 'Village mission revision missing'; exit 1; }
+          grep -q 'VILLAGER AHEAD   CROSS: TALK' build/generated/main_visual.c || { echo 'Village NPC mission step missing'; exit 1; }
+          grep -q 'VILLAGE DEPTH REV 288' src/world3d.c || { echo 'Village depth mapping missing'; exit 1; }
+          grep -q 'static int wz(int sy)' src/world3d.c || { echo 'Ground-plane depth mapping missing'; exit 1; }
           grep -q 'COMMERCIAL VISUAL REV 283' build/generated/main_visual.c || { echo 'Commercial visual revision missing'; exit 1; }
           grep -q 'D-PAD  MOVE' build/generated/main_visual.c || { echo 'Compact movement onboarding missing'; exit 1; }
           grep -q 'MOKO VISUAL REV 284' src/moko_sprite.c || { echo 'Moko renderer visual revision missing'; exit 1; }
@@ -90,7 +96,7 @@ jobs:
           BIN_SHA=$(sha256sum dist/MOKO.bin | awk '{print $1}')
           BIN_SIZE=$(stat -c%s dist/MOKO.bin)
           CUE_SHA=$(sha256sum dist/MOKO.cue | awk '{print $1}')
-          printf 'MOKO 3D vertical slice\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
+          printf 'MOKO 3D vertical slice rev 288\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
           cat dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
