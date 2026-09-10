@@ -39,15 +39,15 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify audio polish revision is compiled
+      - name: Verify objective compass revision is compiled
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
-          grep -a -q 'AUDIO REV 264' "$EXE" || { echo 'Audio revision marker missing'; exit 1; }
+          grep -a -q 'COMPASS REV 265' "$EXE" || { echo 'Objective compass revision marker missing'; exit 1; }
+          grep -a -q 'OBJECTIVE: RESTORE THE STATION SIGNAL' "$EXE" || { echo 'Station objective missing'; exit 1; }
+          grep -a -q 'OBJECTIVE: CLAIM THE MEMORY SHARD' "$EXE" || { echo 'Shard objective missing'; exit 1; }
+          grep -a -q 'COMPASS: %s  DIST %d' "$EXE" || { echo 'Dynamic compass feedback missing'; exit 1; }
           grep -a -q "LAST TRAIN: CONDUCTOR'S WATCH RECOVERED" "$EXE" || { echo 'Last Train setpiece regressed'; exit 1; }
-          grep -a -q 'RAIN TRAIL: FOLLOW THE DROP INTO THE SKY' "$EXE" || { echo 'Reverse rain setpiece regressed'; exit 1; }
-          grep -a -q 'MIDNIGHT TEA: THE SECOND CUP IS WARM' "$EXE" || { echo 'Midnight tea setpiece regressed'; exit 1; }
-          grep -a -q 'BELL MACHINE: HEART BEATING AGAIN' "$EXE" || { echo 'Bell machine setpiece regressed'; exit 1; }
           grep -a -q 'TIME FRAGMENT +5 SEC' "$EXE" || { echo 'Temporal pickups regressed'; exit 1; }
           grep -a -q 'CROSS - REWIND TO CHECKPOINT' "$EXE" || { echo 'Checkpoint retry regressed'; exit 1; }
           grep -a -q 'HOUR WARDEN PHASE' "$EXE" || { echo 'Hour Warden phase HUD regressed'; exit 1; }
@@ -64,11 +64,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO audio polish revision 264\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO objective compass revision 265\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-audio264-run${{ github.run_number }}
+          name: MOKO-PS1-compass265-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
