@@ -15,6 +15,7 @@ set(MOKO_GENERATED_GUARD_BASE "${MOKO_GENERATED_DIR}/main_guard_base.c")
 set(MOKO_GENERATED_CLOCK_BASE "${MOKO_GENERATED_DIR}/main_clock_base.c")
 set(MOKO_GENERATED_SENTINEL_BASE "${MOKO_GENERATED_DIR}/main_sentinel_base.c")
 set(MOKO_GENERATED_WARDEN_BASE "${MOKO_GENERATED_DIR}/main_warden_base.c")
+set(MOKO_GENERATED_REWIND_BASE "${MOKO_GENERATED_DIR}/main_rewind_base.c")
 set(MOKO_GENERATED_MAIN "${MOKO_GENERATED_DIR}/main_visual.c")
 add_custom_command(
     OUTPUT "${MOKO_GENERATED_MAIN}"
@@ -30,8 +31,9 @@ add_custom_command(
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_memory_clocks.py" "${MOKO_GENERATED_GUARD_BASE}" "${MOKO_GENERATED_CLOCK_BASE}"
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_chrono_sentinel.py" "${MOKO_GENERATED_CLOCK_BASE}" "${MOKO_GENERATED_SENTINEL_BASE}"
     COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_warden_phases.py" "${MOKO_GENERATED_SENTINEL_BASE}" "${MOKO_GENERATED_WARDEN_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_death_rewind.py" "${MOKO_GENERATED_WARDEN_BASE}" "${MOKO_GENERATED_MAIN}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_clock_guard.py" "${PROJECT_SOURCE_DIR}/tools/inject_memory_clocks.py" "${PROJECT_SOURCE_DIR}/tools/inject_chrono_sentinel.py" "${PROJECT_SOURCE_DIR}/tools/inject_warden_phases.py" "${PROJECT_SOURCE_DIR}/tools/inject_death_rewind.py" "${PROJECT_SOURCE_DIR}/src/world3d.h" "${PROJECT_SOURCE_DIR}/src/save.h"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_death_rewind.py" "${MOKO_GENERATED_WARDEN_BASE}" "${MOKO_GENERATED_REWIND_BASE}"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_temporal_pickups.py" "${MOKO_GENERATED_REWIND_BASE}" "${MOKO_GENERATED_MAIN}"
+    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_clock_guard.py" "${PROJECT_SOURCE_DIR}/tools/inject_memory_clocks.py" "${PROJECT_SOURCE_DIR}/tools/inject_chrono_sentinel.py" "${PROJECT_SOURCE_DIR}/tools/inject_warden_phases.py" "${PROJECT_SOURCE_DIR}/tools/inject_death_rewind.py" "${PROJECT_SOURCE_DIR}/tools/inject_temporal_pickups.py" "${PROJECT_SOURCE_DIR}/src/world3d.h" "${PROJECT_SOURCE_DIR}/src/save.h"
     VERBATIM
 )
 
