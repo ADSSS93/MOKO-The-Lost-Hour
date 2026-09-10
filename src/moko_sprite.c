@@ -10,3 +10,7 @@ static void play_boot_intro(void){MokoIntro in;DRAWENV d,r;DISPENV e;int f,s,t,p
 void moko_sprite_init(void){GetTimInfo((const uint32_t*)moko_tim,&moko_image);LoadImage(moko_image.prect,moko_image.paddr);if(moko_image.mode&8)LoadImage(moko_image.crect,moko_image.caddr);DrawSync(0);moko_ready=1;play_boot_intro();}
 static void tile(uint32_t*ot,char**n,int z,int x,int y,int w,int h,int r,int g,int b){TILE*t=(TILE*)*n;setTile(t);setXY0(t,x,y);setWH(t,w,h);setRGB0(t,r,g,b);addPrim(ot+z,t);*n+=sizeof(TILE);}
 void moko_sprite_draw(int x,int y,int facing,int walk,int inv,int tick,uint32_t*ot,char**n){SPRT*s;DR_TPAGE*p;int moving=walk>0,pose=moving?1+((walk/7)&1):0,frame=(facing?0:3)+pose,bob=moving?((walk/7)&1):((tick/24)&1);if(!moko_ready)return;if(inv>0&&((tick/3)&1))return;tile(ot,n,2,x+2,y+31,25,4,9,10,18);s=(SPRT*)*n;setSprt(s);setXY0(s,x-2,y-bob-2);setWH(s,28,34);setUV0(s,frame*28,0);setRGB0(s,255,255,255);addPrim(ot,s);*n+=sizeof(SPRT);p=(DR_TPAGE*)*n;setDrawTPage(p,0,0,getTPage(2,0,moko_image.prect->x,moko_image.prect->y));addPrim(ot,p);*n+=sizeof(DR_TPAGE);if(moving){int q=(tick/3)&3;tile(ot,n,1,x+(facing?-7:28),y+27-q*2,2,2,105,185,225);}if((tick&15)<3)tile(ot,n,0,x+11,y-bob+17,2,2,248,228,165);(void)moko_visual_revision;}
+
+/* Compiled here intentionally so the GTE renderer is guaranteed to be part of the
+   active executable without depending on the legacy generated-source list. */
+#include "world3d.c"
