@@ -5,10 +5,13 @@ src = pathlib.Path(sys.argv[1]).read_text()
 if 'PAUSE REV 267' not in src or 'COMPASS REV 265' not in src:
     raise SystemExit('title/tutorial revision anchors missing')
 
+state_anchor = 'static void reset_game(void);'
+if state_anchor not in src:
+    raise SystemExit('title/tutorial state anchor missing')
+src = src.replace(state_anchor, 'static int title_choice=0,title_tick=0;\nstatic uint8_t tutorial_flags=0;\n' + state_anchor, 1)
+
 anchor = 'static int warden_phase_level(void)'
-helpers = r'''static int title_choice=0,title_tick=0;
-static uint8_t tutorial_flags=0;
-static void title_clock_art(int cx,int cy){
+helpers = r'''static void title_clock_art(int cx,int cy){
     int p=(title_tick/10)&3,hand=(title_tick/12)&7,i;
     rect(0,0,320,240,5,7,18);
     for(i=0;i<16;i++){int x=(i*47+title_tick/3)%340-10,y=22+((i*31+title_tick/7)%180);rect(x,y,2,2,45+(i&1)*30,42,78+(i%3)*12);}
@@ -65,7 +68,6 @@ if anchor not in src:
     raise SystemExit('title/tutorial helper anchor missing')
 src = src.replace(anchor, helpers + anchor, 1)
 
-# New games should teach the controls; Continue skips onboarding for returning players.
 reset_anchor = 'static void reset_game(void){int i;px=20;py=190;room=0;'
 if reset_anchor not in src:
     raise SystemExit('new game tutorial reset anchor missing')
