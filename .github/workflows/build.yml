@@ -46,8 +46,8 @@ jobs:
           test -f build/generated/main_visual.c || { echo 'Generated gameplay source missing'; exit 1; }
           grep -q 'COMMERCIAL VISUAL REV 283' build/generated/main_visual.c || { echo 'Commercial visual revision missing'; exit 1; }
           grep -q 'D-PAD  MOVE' build/generated/main_visual.c || { echo 'Compact movement onboarding missing'; exit 1; }
-          grep -q 'MOKO VISUAL REV 282' src/moko_sprite.c || { echo 'Moko renderer visual revision missing'; exit 1; }
-          grep -q 'MOKO VISUAL REV 282' tools/generate_moko_tim.py || { echo 'Moko TIM generator revision missing'; exit 1; }
+          grep -q 'MOKO VISUAL REV 284' src/moko_sprite.c || { echo 'Moko renderer visual revision missing'; exit 1; }
+          grep -q 'MOKO VISUAL REV 284' tools/generate_moko_tim.py || { echo 'Moko TIM generator revision missing'; exit 1; }
           grep -a -q 'MOKO COMBAT FEEDBACK REV 281' "$EXE" || { echo 'Moko combat feedback revision missing'; exit 1; }
           grep -a -q 'HOUR CHAMBER POLISH REV 280' "$EXE" || { echo 'Hour Chamber polish revision missing'; exit 1; }
           grep -q 'TIME ANCHORS %d/3  STABILITY %d%%' build/generated/main_visual.c || { echo 'Hour Chamber anchor HUD missing'; exit 1; }
@@ -89,12 +89,12 @@ jobs:
           BIN_SHA=$(sha256sum dist/MOKO.bin | awk '{print $1}')
           BIN_SIZE=$(stat -c%s dist/MOKO.bin)
           CUE_SHA=$(sha256sum dist/MOKO.cue | awk '{print $1}')
-          printf 'MOKO commercial visual revision 283\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
+          printf 'MOKO visual revision 284\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
           cat dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-commercial283-run${{ github.run_number }}
+          name: MOKO-PS1-visual284-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
