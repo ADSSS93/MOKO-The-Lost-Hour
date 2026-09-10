@@ -39,19 +39,20 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify death rewind revision is compiled
+      - name: Verify temporal pickup revision is compiled
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
-          grep -a -q 'REWIND REV 261' "$EXE" || { echo 'Death rewind revision marker missing'; exit 1; }
-          grep -a -q 'THE HOUR SHATTERED' "$EXE" || { echo 'Death rewind presentation missing'; exit 1; }
-          grep -a -q 'CROSS - REWIND TO CHECKPOINT' "$EXE" || { echo 'Checkpoint retry flow missing'; exit 1; }
-          grep -a -q 'MEMORY CARD CHECKPOINT - SHARDS' "$EXE" || { echo 'Persistent checkpoint retry missing'; exit 1; }
+          grep -a -q 'PICKUP REV 262' "$EXE" || { echo 'Temporal pickup revision marker missing'; exit 1; }
+          grep -a -q 'TIME FRAGMENT +5 SEC' "$EXE" || { echo 'Time fragment feedback missing'; exit 1; }
+          grep -a -q 'FOCUS CRYSTAL +25' "$EXE" || { echo 'Focus crystal feedback missing'; exit 1; }
+          grep -a -q 'CLOCK HEART RESTORED' "$EXE" || { echo 'Clock heart feedback missing'; exit 1; }
+          grep -a -q 'THE HOUR SHATTERED' "$EXE" || { echo 'Death rewind presentation regressed'; exit 1; }
+          grep -a -q 'CROSS - REWIND TO CHECKPOINT' "$EXE" || { echo 'Checkpoint retry flow regressed'; exit 1; }
           grep -a -q 'HOUR WARDEN PHASE' "$EXE" || { echo 'Hour Warden phase HUD regressed'; exit 1; }
           grep -a -q 'MINIBOSS: CHRONO SENTINEL' "$EXE" || { echo 'Chrono Sentinel regressed'; exit 1; }
           grep -a -q 'REST AT MEMORY CLOCK' "$EXE" || { echo 'Memory Clock interaction regressed'; exit 1; }
           grep -a -q 'SQUARE:GUARD' "$EXE" || { echo 'Clock Guard regressed'; exit 1; }
-          grep -a -q 'AREA SECURED - TIME MEMORY RESTORED' "$EXE" || { echo 'Encounter feedback regressed'; exit 1; }
           grep -a -q 'TRIANGLE - CONTINUE' "$EXE" || { echo 'Continue menu missing'; exit 1; }
 
       - name: Collect disc image
@@ -62,11 +63,11 @@ jobs:
           test -n "$BIN" && test -n "$CUE"
           cp "$BIN" dist/MOKO.bin
           cp "$CUE" dist/MOKO.cue
-          printf 'MOKO death rewind revision 261\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
+          printf 'MOKO temporal pickup revision 262\ncommit=%s\nrun=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" > dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-rewind261-run${{ github.run_number }}
+          name: MOKO-PS1-pickup262-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
