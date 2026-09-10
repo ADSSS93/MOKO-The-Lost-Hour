@@ -8,10 +8,9 @@ if not m: raise SystemExit('3d mode: room_art missing')
 room=r'''static void room_art(void){
     int i;
     if(room==0){
-        /* Village of Dawn vertical slice: the entire gameplay presentation is
-           rendered in GTE 3D. No legacy 2D actors or debug scenery are layered
-           over this scene. */
-        world3d_draw_village(px,py,facing,anim_tick,slice_motes,slice_enemy_hp,slice_clear,db[active].ot,&next_packet);
+        /* Village of Dawn vertical slice: gameplay X/Y become ground-plane X/Z,
+           while the existing jump controller drives the 3D model vertically. */
+        world3d_draw_village(px,py,moko_z/16,facing,anim_tick,slice_motes,slice_enemy_hp,slice_clear,db[active].ot,&next_packet);
         return;
     }
     if(room==1)street_art();
@@ -25,5 +24,5 @@ room=r'''static void room_art(void){
 }
 '''
 src=pat.sub(room+'static void collect_shard',src,count=1)
-src+='\n/* REAL 3D VERTICAL SLICE REV 287: Village of Dawn active in gameplay */\n'
+src+='\n/* REAL 3D VERTICAL SLICE REV 288: depth lanes + animated jump */\n'
 pathlib.Path(sys.argv[2]).write_text(src)
