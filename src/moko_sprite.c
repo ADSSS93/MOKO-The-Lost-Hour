@@ -6,21 +6,25 @@
 extern const uint8_t moko_tim[];
 static TIM_IMAGE moko_image;
 static int moko_ready=0;
+static const char moko_visual_revision[]="MOKO VISUAL REV 282";
 
 static void intro_tile(int x,int y,int w,int h,int r,int g,int b){TILE t;setTile(&t);setXY0(&t,x,y);setWH(&t,w,h);setRGB0(&t,r,g,b);DrawPrim((const uint32_t*)&t);}
 static void starfield(int t){int i;for(i=0;i<28;i++){int x=(i*73+t/(2+(i&3)))%320;int y=18+((i*37)%190);int v=45+((i*29+t)&63);intro_tile(x,y,(i%7)==0?2:1,(i%7)==0?2:1,v,v+8,v+20);}}
 static void clock_face(int cx,int cy,int r,int pulse){int i;intro_tile(cx-r,cy-r,r*2,r*2,8,13,27);intro_tile(cx-r+4,cy-r+4,r*2-8,r*2-8,28,39,58);intro_tile(cx-r+8,cy-r+8,r*2-16,r*2-16,10,17,31);for(i=0;i<12;i++){int x=cx+((i%3)-1)*(r-13);int y=cy+(((i/3)%3)-1)*(r-13);intro_tile(x,y,2,2,145,150,165);}intro_tile(cx-2,cy-r+9,4,9,205,185,125);intro_tile(cx-2,cy,4,31,205,185,125);intro_tile(cx,cy-2,27,4,205,185,125);intro_tile(cx-4-pulse,cy-4-pulse,8+pulse*2,8+pulse*2,50,170,195);}
 static void moko_silhouette(int x,int y,int pulse){
-    intro_tile(x+7,y+5,26,20,86+pulse*8,48,126+pulse*10);
-    intro_tile(x+8,y,8,11,61,31,94);intro_tile(x+25,y,8,11,61,31,94);
-    intro_tile(x+10,y+9,20,14,116+pulse*6,66,158+pulse*7);
-    intro_tile(x+14,y+13,4,4,238,242,250);intro_tile(x+15,y+14,2,2,20,18,30);
-    intro_tile(x+24,y+17,3,3,236,80,146);
-    intro_tile(x+9,y+25,24,31,75+pulse*7,38,111+pulse*8);
+    /* Title silhouette mirrors the in-game feline proportions: ears, cheeks, haunches and clock-hand tail. */
+    intro_tile(x+8,y+5,24,18,86+pulse*8,48,126+pulse*10);
+    intro_tile(x+7,y,7,10,61,31,94);intro_tile(x+26,y,7,10,61,31,94);
+    intro_tile(x+4,y+11,4,5,128,73,168);intro_tile(x+32,y+11,4,5,128,73,168);
+    intro_tile(x+11,y+9,18,13,116+pulse*6,66,158+pulse*7);
+    intro_tile(x+13,y+12,4,4,238,242,250);intro_tile(x+24,y+12,4,4,238,242,250);
+    intro_tile(x+20,y+17,3,3,236,80,146);
+    intro_tile(x+11,y+24,20,28,75+pulse*7,38,111+pulse*8);
+    intro_tile(x+8,y+42,26,13,90,45,129);
     intro_tile(x+15,y+31,12,12,201,174,106);intro_tile(x+18,y+34,6,6,241,226,172);intro_tile(x+21,y+35,2,5,28,22,31);
-    intro_tile(x+5,y+29,7,23,90,45,129);intro_tile(x+30,y+29,7,23,90,45,129);
-    intro_tile(x+12,y+54,8,13,52,28,82);intro_tile(x+24,y+54,8,13,52,28,82);
-    intro_tile(x+34,y+39,13,4,213,62,132);intro_tile(x+44,y+35,4,8,213,62,132);intro_tile(x+46,y+32,3,6,214,176,91);
+    intro_tile(x+5,y+28,7,17,90,45,129);intro_tile(x+30,y+28,7,17,90,45,129);
+    intro_tile(x+8,y+52,10,10,52,28,82);intro_tile(x+24,y+52,10,10,52,28,82);
+    intro_tile(x+34,y+38,12,4,213,62,132);intro_tile(x+43,y+31,4,11,213,62,132);intro_tile(x+45,y+27,3,7,214,176,91);
 }
 static void play_boot_intro(void){
     MokoIntro in;DRAWENV intro_draw,restore_draw;DISPENV intro_disp;int f,scene,t,pulse,i;
@@ -53,33 +57,43 @@ void moko_sprite_init(void){GetTimInfo((const uint32_t *)moko_tim,&moko_image);L
 static void add_tile(uint32_t *ot,char **next_packet,int depth,int x,int y,int w,int h,int r,int g,int b){TILE*t=(TILE*)(*next_packet);setTile(t);setXY0(t,x,y);setWH(t,w,h);setRGB0(t,r,g,b);addPrim(ot+depth,t);*next_packet+=sizeof(TILE);}
 
 void moko_sprite_draw(int x,int y,int facing,int walk_tick,int invuln,int anim_tick,uint32_t *ot,char **next_packet){
-    SPRT *spr;DR_TPAGE *page;TILE *shadow,*aura;int moving=(walk_tick>0);int pose=moving?1+((walk_tick/7)&1):0;int frame=(facing?0:3)+pose;int bob=moving?((walk_tick/7)&1):((anim_tick/24)&1);int pulse=(anim_tick/6)&3;int tail=(anim_tick/8)&3;int chest_x=x+11,chest_y=y-bob+16;
+    SPRT *spr;DR_TPAGE *page;TILE *shadow;int moving=(walk_tick>0);int pose=moving?1+((walk_tick/7)&1):0;int frame=(facing?0:3)+pose;int bob=moving?((walk_tick/7)&1):((anim_tick/24)&1);int pulse=(anim_tick/6)&3;int tail=(anim_tick/8)&3;int chest_x=x+12,chest_y=y-bob+19;
     if(!moko_ready)return;if(invuln>0&&((anim_tick/3)&1))return;
 
-    /* Soft purple aura makes Moko readable against every background. */
-    aura=(TILE*)(*next_packet);setTile(aura);setXY0(aura,x-2-pulse/2,y-bob-2-pulse/2);setWH(aura,28+pulse,36+pulse);setRGB0(aura,35+pulse*5,16,58+pulse*7);setSemiTrans(aura,1);addPrim(ot+2,aura);*next_packet+=sizeof(TILE);
+    /* No rectangular aura: it made the old sprite read like a robot/block. Small sparks preserve contrast. */
+    if(((anim_tick/5)&3)==0){add_tile(ot,next_packet,2,x-3,y-bob+8,2,2,112,70,168);add_tile(ot,next_packet,2,x+25,y-bob+19,2,2,77,174,216);}
+    if(((anim_tick/7)&3)==2)add_tile(ot,next_packet,2,x+2,y-bob-2,1,3,205,125,229);
 
-    /* Dynamic shadow compresses while walking, reinforcing the low-poly PS1 bounce. */
-    shadow=(TILE*)(*next_packet);setTile(shadow);setXY0(shadow,x+3+(moving?1:0),y+29);setWH(shadow,moving?16:18,moving?3:4);setRGB0(shadow,10,12,20);addPrim(ot+1,shadow);*next_packet+=sizeof(TILE);
+    /* Wider, low shadow emphasizes paws/haunches rather than a tall humanoid body. */
+    shadow=(TILE*)(*next_packet);setTile(shadow);setXY0(shadow,x+2+(moving?1:0),y+29);setWH(shadow,moving?19:21,moving?3:4);setRGB0(shadow,10,12,20);addPrim(ot+1,shadow);*next_packet+=sizeof(TILE);
 
     spr=(SPRT *)(*next_packet);setSprt(spr);setXY0(spr,x,y-bob);setWH(spr,24,32);setUV0(spr,frame*24,0);setRGB0(spr,255,255,255);addPrim(ot,spr);*next_packet+=sizeof(SPRT);
     page=(DR_TPAGE *)(*next_packet);setDrawTPage(page,0,0,getTPage(2,0,moko_image.prect->x,moko_image.prect->y));addPrim(ot,page);*next_packet+=sizeof(DR_TPAGE);
 
-    /* Readable identity details layered over the sprite: bright ears, chest clock and clock-hand tail. */
-    add_tile(ot,next_packet,0,x+5,y-bob+1,3,4,174,83,225);add_tile(ot,next_packet,0,x+16,y-bob+1,3,4,174,83,225);
-    add_tile(ot,next_packet,0,chest_x-3,chest_y-3,7,7,207,164,76);add_tile(ot,next_packet,0,chest_x-2,chest_y-2,5,5,246,221,148);
-    add_tile(ot,next_packet,0,chest_x,chest_y-1,1,3,42,28,51);add_tile(ot,next_packet,0,chest_x,chest_y,2+(pulse&1),1,42,28,51);
-    add_tile(ot,next_packet,0,chest_x-4-pulse/2,chest_y-4-pulse/2,9+pulse,1,122,61,173);
+    /* Feline identity overlays survive texture filtering: ear tips, cheek tufts, whiskers and paws. */
+    add_tile(ot,next_packet,0,x+6,y-bob+1,2,4,190,89,221);add_tile(ot,next_packet,0,x+17,y-bob+1,2,4,190,89,221);
+    add_tile(ot,next_packet,0,x+2,y-bob+10,3,2,145,76,190);add_tile(ot,next_packet,0,x+20,y-bob+10,3,2,145,76,190);
+    if(facing){add_tile(ot,next_packet,0,x+18,y-bob+12,6,1,238,220,245);add_tile(ot,next_packet,0,x+19,y-bob+14,5,1,220,199,235);}
+    else{add_tile(ot,next_packet,0,x,y-bob+12,6,1,238,220,245);add_tile(ot,next_packet,0,x,y-bob+14,5,1,220,199,235);}
+    add_tile(ot,next_packet,0,x+3,y-bob+27,7,3,103,54,150);add_tile(ot,next_packet,0,x+14,y-bob+27,7,3,103,54,150);
 
-    /* Tail behaves like a clock hand: it swings through four angular silhouettes. */
+    /* Oversized chest clock is the second silhouette cue after the ears. */
+    add_tile(ot,next_packet,0,chest_x-4,chest_y-4,9,9,207,164,76);add_tile(ot,next_packet,0,chest_x-3,chest_y-3,7,7,246,221,148);
+    add_tile(ot,next_packet,0,chest_x,chest_y-2,1,4,42,28,51);add_tile(ot,next_packet,0,chest_x,chest_y,3+(pulse&1),1,42,28,51);
+    if((anim_tick&15)<4){add_tile(ot,next_packet,0,chest_x-5,chest_y-5,2,2,238,225,170);}
+
+    /* Clock-hand tail curls upward and finishes with a gold pointer; attack code layers the swing over this. */
     if(facing){
-        add_tile(ot,next_packet,0,x+22,y-bob+18,5+tail*2,3,197,58,137);
-        add_tile(ot,next_packet,0,x+26+tail*2,y-bob+15-tail,3,5+tail,220,151,79);
+        add_tile(ot,next_packet,0,x+21,y-bob+20,3,7,197,58,137);
+        add_tile(ot,next_packet,0,x+20-tail/2,y-bob+15-tail,3,7,197,58,137);
+        add_tile(ot,next_packet,0,x+19-tail/2,y-bob+12-tail,3,4,220,151,79);
     }else{
-        add_tile(ot,next_packet,0,x-(3+tail*2),y-bob+18,5+tail*2,3,197,58,137);
-        add_tile(ot,next_packet,0,x-(4+tail*2),y-bob+15-tail,3,5+tail,220,151,79);
+        add_tile(ot,next_packet,0,x,y-bob+20,3,7,197,58,137);
+        add_tile(ot,next_packet,0,x+1+tail/2,y-bob+15-tail,3,7,197,58,137);
+        add_tile(ot,next_packet,0,x+2+tail/2,y-bob+12-tail,3,4,220,151,79);
     }
 
-    /* Tiny memory sparks trail movement so Moko never feels visually static. */
+    /* Tiny memory sparks trail locomotion without enclosing Moko in a rectangular effect. */
     if(moving){int s=(anim_tick/3)&3;add_tile(ot,next_packet,1,x+(facing?-4:27),y+24-s*2,2,2,113,186,226);if((anim_tick&7)<4)add_tile(ot,next_packet,1,x+(facing?-8:31),y+28,1,1,190,109,231);}
+    (void)moko_visual_revision;
 }
