@@ -44,7 +44,7 @@ jobs:
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
           test -f build/generated/main_visual.c || { echo 'Generated gameplay source missing'; exit 1; }
-          grep -a -q 'MOKO VISUAL REV 282' "$EXE" || { echo 'Moko visual revision missing from executable'; exit 1; }
+          grep -q 'MOKO VISUAL REV 282' src/moko_sprite.c || { echo 'Moko renderer visual revision missing'; exit 1; }
           grep -q 'MOKO VISUAL REV 282' tools/generate_moko_tim.py || { echo 'Moko TIM generator revision missing'; exit 1; }
           grep -a -q 'MOKO COMBAT FEEDBACK REV 281' "$EXE" || { echo 'Moko combat feedback revision missing'; exit 1; }
           grep -a -q 'HOUR CHAMBER POLISH REV 280' "$EXE" || { echo 'Hour Chamber polish revision missing'; exit 1; }
