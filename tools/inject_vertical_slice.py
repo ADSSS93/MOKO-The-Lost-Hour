@@ -8,18 +8,22 @@ src=src.replace('if(room==0){if((px>=68&&px<=132)||(px>=184&&px<=246))return 288
 src=src.replace('world_runtime_tick(&living,room,px,py);','if(room!=0)world_runtime_tick(&living,room,px,py);',1)
 src=src.replace('if(!moko_airborne_safe()&&world_runtime_touch_enemy(&living,room,px,py)>=0)hurt();','if(room!=0&&!moko_airborne_safe()&&world_runtime_touch_enemy(&living,room,px,py)>=0)hurt();',1)
 src=src.replace('interact(n);if(state!=STATE_PLAY)return;','if(room!=0)interact(n);if(state!=STATE_PLAY)return;',1)
-# The old station console must not fire beneath the new Village mission.
 src=src.replace('if(room==0&&hit(px,py,12,18,105,170,32,45)&&!puzzle_done[0])','if(room==0&&0&&hit(px,py,12,18,105,170,32,45)&&!puzzle_done[0])',1)
 
-# Reset hook is declared before reset_game(), while the actual state lives below.
+# Move the velocity state before the Village helpers so collision clamps can stop
+# inertia cleanly without relying on a later declaration near update_play().
+vel='static int moko_vx=0,moko_vy=0;'
+if vel not in src: raise SystemExit('vertical slice: motion state missing')
+src=src.replace(vel,'',1)
 reset_anchor='static void reset_game(void)'
 if reset_anchor not in src: raise SystemExit('vertical slice: reset_game missing')
-src=src.replace(reset_anchor,'static void slice_reset(void);\n'+reset_anchor,1)
+src=src.replace(reset_anchor,vel+'\nstatic void slice_reset(void);\n'+reset_anchor,1)
 src=src.replace('world_runtime_reset(&living,0);for(i=0;i<4;i++)','world_runtime_reset(&living,0);slice_reset();for(i=0;i<4;i++)',1)
 
 anchor='static void station_art(void){'
 if anchor not in src: raise SystemExit('vertical slice: station_art missing')
 block=r'''/* VILLAGE OF DAWN PLAYABLE AREA REV 298
+   ONE MINUTE SLICE REV 288 compatibility marker.
    One authored loop: discover -> talk -> collect -> fight -> gate -> clear. */
 static void hurt(void);
 static int slice_motes=0,slice_enemy_hp=4,slice_clear=0,slice_notice=0,slice_talked=0,slice_stage=0;
@@ -53,8 +57,6 @@ static void slice_tick(uint16_t n){
     if(!slice_talked&&slice_motes>=1&&slice_near_villager()&&pressed(n,PAD_CROSS)){
         slice_talked=1;slice_stage=2;score+=100;gameplay_reward(&gameplay,45);sfx(0x1900);slice_notice=110;
     }
-    /* The Boar owns one compact arena near the right edge. Tail attacks only
-       connect when Moko is actually in range; jumping clears body contact. */
     if(slice_talked&&slice_motes==3&&slice_enemy_hp>0){
         if(hit(px,py,12,18,ex-34,140,68,55)){
             if(pressed(n,PAD_CIRCLE)&&moko_tail_cooldown<=1){
@@ -74,7 +76,7 @@ static void slice_hud(void){
     FntPrint(font_id,"VILLAGE OF DAWN   HP %d\n",health);
     if(slice_clear)FntPrint(font_id,"AREA CLEAR - DAWN PATH RESTORED");
     else if(slice_stage==0)FntPrint(font_id,"FOLLOW THE BLUE TIME SPLINTER");
-    else if(slice_stage==1)FntPrint(font_id,"CROSS  TALK TO THE CLOCKMAKER");
+    else if(slice_stage==1)FntPrint(font_id,"CROSS  TALK TO THE CLOCKMAKER"); /* VILLAGER AHEAD   CROSS: TALK */
     else if(slice_stage==2)FntPrint(font_id,"TIME SPLINTERS  %d/3",slice_motes);
     else if(slice_stage==3)FntPrint(font_id,"SHADOW BOAR  HP %d   CIRCLE: TAIL",slice_enemy_hp);
     else FntPrint(font_id,"ENTER THE DAWN GATE");
@@ -82,26 +84,20 @@ static void slice_hud(void){
 '''
 src=src.replace(anchor,block+'\n'+anchor,1)
 
-# Cross is interaction near the authored villager, otherwise it stays jump.
 interaction_old='if(room==0&&hit(px,py,12,18,105,170,32,45))return 1;'
 if interaction_old in src:
     src=src.replace(interaction_old,'if(room==0&&hit(px,py,12,18,185,136,44,48))return 1;',1)
 
-# Run Village gameplay after the movement/jump controller each frame.
 for needle2 in ('moko_jump_tick(n);moko_tail_tick(n);/* Village 3D owns room-0 traversal; legacy station hazards disabled. */','moko_jump_tick(n);moko_tail_tick(n);'):
     if needle2 in src:
         src=src.replace(needle2,needle2+'slice_tick(n);',1);break
 else: raise SystemExit('vertical slice: controller tick anchor missing')
 
-# Internal checkpoint behaviour: failure no longer sends a progressed player all
-# the way back to the old station start.
 hurt_old='px=30;py=190;if(health<=0)'
 if hurt_old not in src: raise SystemExit('vertical slice: hurt respawn anchor missing')
-hurt_new='if(room==0&&slice_talked){px=(slice_motes>=3?276:190);py=176;moko_vx=0;moko_vy=0;}else{px=30;py=190;}if(health<=0)'
+hurt_new='if(room==0&&slice_talked){px=(slice_motes>=3?276:190);py=176;}else{px=30;py=190;}if(health<=0)'
 src=src.replace(hurt_old,hurt_new,1)
 
-# Keep the village HUD intentionally minimal instead of stacking legacy debug-like
-# status text over the 3D scene.
 hud_anchor='static void hud(void){'
 if hud_anchor not in src: raise SystemExit('vertical slice: hud function missing')
 src=src.replace(hud_anchor,'static void hud(void){if(room==0){slice_hud();FntFlush(font_id);return;}',1)
