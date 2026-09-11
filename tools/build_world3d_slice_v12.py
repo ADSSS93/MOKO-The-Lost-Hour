@@ -4,9 +4,9 @@ if 'VILLAGE 3D V13 REV 303' not in src:
     raise SystemExit('Village v13 marker missing')
 src=src.replace('VILLAGE 3D V13 REV 303','VILLAGE 3D V19 REV 309 / VILLAGE 3D V18 REV 308 / VILLAGE 3D V17 REV 307 / VILLAGE 3D V16 REV 306 / VILLAGE 3D V15 REV 305 / VILLAGE 3D V14 REV 304 / VILLAGE 3D V13 REV 303',1)
 
-# Runtime #450 exposed the remaining near-plane failure: old road() still emitted
-# many boxes close to the eye. Replace it wholesale with broad flat bands only.
-road_pat=re.compile(r'static void road\(uint32_t\*ot,char\*\*pk\)\{.*?\}\nstatic void villager',re.S)
+# In the generated source, V3 inserts authored helpers between road() and villager().
+# Stop at awning(), the first helper, so replacing road never deletes scene helpers.
+road_pat=re.compile(r'static void road\(uint32_t\*ot,char\*\*pk\)\{.*?\}\nstatic void awning',re.S)
 road_rep=r'''static void road(uint32_t*ot,char**pk){
     int i;
     quad3g(ot,pk,7,(V3){-1500,188,760},(V3){1500,188,760},(V3){1320,188,1040},(V3){-1320,188,1040},55,53,55,80,67,58);
@@ -17,12 +17,10 @@ road_rep=r'''static void road(uint32_t*ot,char**pk){
         quad3g(ot,pk,6,(V3){-390+shift,183,z0},(V3){390+shift,183,z0},(V3){350+shift,183,z1},(V3){-350+shift,183,z1},115+(i&1)*10,92+(i&1)*8,67,147+(i&1)*8,116+(i&1)*6,75);
     }
 }
-static void villager'''
+static void awning'''
 src,n=road_pat.subn(road_rep,src,count=1)
 if n!=1: raise SystemExit('rev309 safe road replacement failed')
 
-# V11 can format this helper compactly, so match the function body independent of
-# whether its closing brace is preceded by a newline.
 pat=re.compile(r'static void commercial_foreground_v13\(uint32_t\*ot,char\*\*pk,int tick\)\{.*?\}',re.S)
 replacement=r'''static void commercial_foreground_v13(uint32_t*ot,char**pk,int tick){
     (void)tick;
