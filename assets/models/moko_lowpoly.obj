@@ -1,5 +1,5 @@
-# MOKO: The Lost Hour - original low-poly protagonist mesh REV315
-# Fuller commercial-PS1 silhouette: head volume, muzzle, torso, limbs, clock and tail.
+# MOKO: The Lost Hour - original low-poly protagonist mesh REV317
+# Original mascot mesh with readable feline ears, feet, muzzle, eyes, polygonal chest clock and tail.
 # Coordinates use the game's Y-down local space.
 o Moko
 v -28 72 18
@@ -54,6 +54,24 @@ v 67 88 11
 v 79 65 8
 v 72 59 2
 v 55 79 5
+# facial eyes, slightly in front of the muzzle
+v -14 48 -48
+v -4 48 -49
+v -9 59 -49
+v 4 48 -49
+v 14 48 -48
+v 9 59 -49
+# octagonal chest clock and raised center
+v 0 91 -43
+v 12 96 -43
+v 17 108 -43
+v 12 120 -43
+v 0 125 -43
+v -12 120 -43
+v -17 108 -43
+v -12 96 -43
+v 0 108 -45
+# body
 f 1 2 7
 f 1 7 3
 f 2 4 7
@@ -64,6 +82,7 @@ f 4 6 8
 f 5 8 6
 f 1 3 5
 f 2 6 4
+# head and ears
 f 9 15 11
 f 11 15 16
 f 11 16 13
@@ -77,6 +96,7 @@ f 9 11 13
 f 10 14 12
 f 17 18 19
 f 20 21 22
+# feet
 f 23 24 25
 f 23 25 5
 f 23 26 24
@@ -85,17 +105,30 @@ f 27 28 29
 f 27 6 29
 f 27 30 28
 f 27 30 6
+# muzzle
 f 31 32 33
 f 31 34 32
 f 31 33 34
 f 32 34 33
-f 35 36 37
-f 36 38 37
+# arms
 f 39 40 41
 f 39 41 42
 f 43 45 44
 f 43 46 45
+# tail
 f 47 48 49
 f 47 49 52
 f 52 49 50
 f 52 50 51
+# eyes
+f 53 54 55
+f 56 57 58
+# chest clock: eight triangles around a raised center
+f 67 59 60
+f 67 60 61
+f 67 61 62
+f 67 62 63
+f 67 63 64
+f 67 64 65
+f 67 65 66
+f 67 66 59
