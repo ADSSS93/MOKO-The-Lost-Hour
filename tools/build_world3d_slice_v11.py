@@ -4,10 +4,8 @@ if 'VILLAGE 3D V10 REV 299' not in src:
     raise SystemExit('Village v10 marker missing')
 src=src.replace('VILLAGE 3D V10 REV 299','VILLAGE 3D V13 REV 303 / VILLAGE 3D V12 REV 301 / VILLAGE 3D V11 REV 300 / VILLAGE 3D V10 REV 299',1)
 
-# Runtime emulator testing exposed classic PS1 near-plane explosions.
 anchor='static int wz(int sy){return 1010+(190-sy)*7;}'
-if anchor not in src:
-    raise SystemExit('rev303 projection helper anchor missing')
+if anchor not in src: raise SystemExit('rev303 projection helper anchor missing')
 helper='''\nstatic int projected_xy_sane(int32_t s){short x=(short)s,y=(short)(s>>16);return x>-320&&x<640&&y>-240&&y<480;}'''
 src=src.replace(anchor,anchor+helper,1)
 tri_old='if(!(flag&0x80000000)){setXY3(p,'
@@ -19,7 +17,6 @@ quad_new='if(!(flag&0x80000000)&&projected_xy_sane(s0)&&projected_xy_sane(s1)&&p
 if quad_old not in src: raise SystemExit('rev303 quad guard anchor missing')
 src=src.replace(quad_old,quad_new)
 
-# Keep broad ground away from the eye and remove the failed decorative foreground.
 src=src.replace('(V3){-1700,188,180},(V3){1700,188,180}','(V3){-1700,188,430},(V3){1700,188,430}',1)
 src=src.replace('(V3){-1700,187,190},(V3){-470,187,190}','(V3){-1700,187,445},(V3){-470,187,445}',1)
 src=src.replace('(V3){470,187,190},(V3){1700,187,190}','(V3){470,187,445},(V3){1700,187,445}',1)
@@ -42,8 +39,6 @@ road_call='road(ot,pk);'
 if road_call not in src: raise SystemExit('rev303 road anchor missing')
 src=src.replace(road_call,road_call+'\n    commercial_foreground_v13(ot,pk,tick);',1)
 
-# Structural change: Moko is now one authored low-poly mesh, not a stack of boxes/prisms.
-# Vertices are local model coordinates and triangles are submitted through the GTE.
 mesh_code=r'''typedef struct { signed char x,y,z; } MokoMeshV;
 typedef struct { unsigned char a,b,c,shade; } MokoMeshF;
 static const MokoMeshV moko_mesh_v[]={
@@ -78,19 +73,17 @@ static void moko_mesh_draw(uint32_t*ot,char**pk,int x,int gy,int z,int facing,in
         V3 c=moko_mesh_world(moko_mesh_v[f.c],x,gy,z,facing,step,bob,jump,tick);
         tri3(ot,pk,2,a,b,c,col[s][0],col[s][1],col[s][2]);
     }
-    /* face markings remain tiny mesh-space facets, not screen/debug rectangles */
     tri3(ot,pk,1,(V3){x-13,gy+76-bob-jump,z-29},(V3){x-5,gy+76-bob-jump,z-30},(V3){x-9,gy+82-bob-jump,z-31},225,215,235);
     tri3(ot,pk,1,(V3){x+5,gy+76-bob-jump,z-30},(V3){x+13,gy+76-bob-jump,z-29},(V3){x+9,gy+82-bob-jump,z-31},225,215,235);
 }
+static void moko(uint32_t*ot,char**pk,int x,int gy,int z,int facing,int tick,int jump){moko_mesh_draw(ot,pk,x,gy,z,facing,tick,jump);}
 '''
 moko_pat=re.compile(r'static void moko\(uint32_t\*ot,char\*\*pk,int x,int gy,int z,int facing,int tick,int jump\)\{.*?\}\nstatic void camera_follow',re.S)
 if not moko_pat.search(src): raise SystemExit('rev303 Moko renderer anchor missing')
 src=moko_pat.sub(mesh_code+'\nstatic void camera_follow',src,count=1)
-# Route gameplay draw call to the mesh renderer.
 src=src.replace('moko(ot,pk,mx,-18,mz,facing,tick,player_jump);','moko_mesh_draw(ot,pk,mx,2,mz,facing,tick,player_jump);',1)
 src=src.replace('moko(ot,pk,mx,0,mz,facing,tick,player_jump);','moko_mesh_draw(ot,pk,mx,2,mz,facing,tick,player_jump);',1)
 
-# Camera target from runtime evidence: character around 25-30% screen height, more foreground visible.
 src=src.replace('gte_SetGeomOffset(160,154);gte_SetGeomScreen(292);','gte_SetGeomOffset(160,148);gte_SetGeomScreen(260);',1)
 src=src.replace('gte_SetGeomOffset(160,142);gte_SetGeomScreen(268);','gte_SetGeomOffset(160,148);gte_SetGeomScreen(260);',1)
 src=src.replace('t.vx=-cam_follow_x;t.vy=-48;t.vz=78-(cam_follow_z-1120)/22;','t.vx=-cam_follow_x;t.vy=-30;t.vz=126-(cam_follow_z-1120)/22;',1)
