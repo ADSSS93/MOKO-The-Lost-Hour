@@ -68,8 +68,8 @@ add_custom_target(moko_models DEPENDS
 
 psn00bsdk_add_executable(moko GPREL src/clean_vertical_slice.c)
 target_include_directories(moko PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/src"
     "${MOKO_GENERATED_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 add_dependencies(moko moko_models)
 
