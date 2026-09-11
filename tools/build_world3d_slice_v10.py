@@ -51,3 +51,4 @@ src+='\n/* REV299 PLAYABLE AREA RENDER CONTRACT: SPLINTERS 112/244/285 BOAR 320 
 out=pathlib.Path(sys.argv[2]);out.write_text(src)
 subprocess.check_call([sys.executable,str(pathlib.Path(__file__).with_name('build_world3d_slice_v11.py')),str(out),str(out)])
 subprocess.check_call([sys.executable,str(pathlib.Path(__file__).with_name('build_world3d_slice_v12.py')),str(out),str(out)])
+subprocess.check_call([sys.executable,str(pathlib.Path(__file__).with_name('build_world3d_slice_v13.py')),str(out),str(out)])
