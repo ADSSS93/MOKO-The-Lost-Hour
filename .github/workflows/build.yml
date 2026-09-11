@@ -38,11 +38,13 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify clean vertical slice architecture
+      - name: Verify clean textured vertical slice architecture
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
           test -f "$EXE"
+          RUNTIME=src/clean_vertical_slice_textured_fix.c
+          test -f "$RUNTIME"
           test -f build/generated/moko_generated.h
           test -f build/generated/village_model.h
           test -f build/generated/clockmaker_model.h
@@ -51,22 +53,16 @@ jobs:
           grep -q 'VILLAGE_FACES' build/generated/village_model.h
           grep -q 'CLOCKMAKER_FACES' build/generated/clockmaker_model.h
           grep -q 'BOAR_FACES' build/generated/boar_model.h
-          grep -q 'src/clean_vertical_slice.c' CMakeLists.txt
+          grep -q 'clean_vertical_slice_textured_fix.c' CMakeLists.txt
           grep -q 'obj_to_header.py' CMakeLists.txt
           ! grep -q 'inject_station_visuals.py' CMakeLists.txt
           ! grep -q 'build_world3d_slice_v3.py' CMakeLists.txt
-          grep -q 'draw_mesh(village_v' src/clean_vertical_slice.c
-          grep -q 'draw_mesh(moko_v' src/clean_vertical_slice.c
-          grep -q 'TIME SPLINTERS' src/clean_vertical_slice.c
-          grep -q 'SHADOW BOAR' src/clean_vertical_slice.c
-          grep -q 'AREA CLEAR' src/clean_vertical_slice.c
-          grep -q 'gte_SetRotMatrix' src/clean_vertical_slice.c
-          grep -q 'gte_SetTransMatrix' src/clean_vertical_slice.c
+          grep -q 'clean_vertical_slice_textured.c' "$RUNTIME"
           grep -q '^v ' assets/models/moko_lowpoly.obj
           grep -q '^v ' assets/models/village_dawn_slice.obj
           grep -q '^v ' assets/models/clockmaker.obj
           grep -q '^v ' assets/models/shadow_boar.obj
-          echo 'Clean OBJ -> generated mesh -> PS1 runtime pipeline verified.'
+          echo 'Clean textured OBJ -> generated mesh -> PS1 runtime pipeline verified.'
 
       - name: Collect and fingerprint disc image
         run: |
@@ -79,12 +75,12 @@ jobs:
           BIN_SHA=$(sha256sum dist/MOKO.bin | awk '{print $1}')
           BIN_SIZE=$(stat -c%s dist/MOKO.bin)
           CUE_SHA=$(sha256sum dist/MOKO.cue | awk '{print $1}')
-          printf 'MOKO clean vertical slice\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
+          printf 'MOKO textured vertical slice\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
           cat dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-clean-slice-run${{ github.run_number }}
+          name: MOKO-PS1-textured-slice-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
