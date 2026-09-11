@@ -1,4 +1,4 @@
-import pathlib,re,sys
+import pathlib,re,sys,subprocess
 src=pathlib.Path(sys.argv[1]).read_text()
 if 'VILLAGE 3D V3 REV 291' not in src: raise SystemExit('Village v3 marker missing')
 src=src.replace('VILLAGE 3D V3 REV 291','VILLAGE 3D V4 REV 292 / VILLAGE 3D V3 REV 291',1)
@@ -20,8 +20,6 @@ static int cam_pitch_v4=188,cam_yaw_v4=0;
 '''
 src=src.replace(anchor,gouraud+anchor,1)
 
-# Replace Moko animation so idle is actually idle, movement drives gait/lean, and landing
-# has a tiny squash. This is runtime motion inferred from real world-space displacement.
 pat=re.compile(r'static void moko\(uint32_t\*ot,char\*\*pk,int x,int gy,int z,int facing,int tick,int jump\)\{.*?\}\nstatic void camera_follow',re.S)
 rep=r'''static void moko(uint32_t*ot,char**pk,int x,int gy,int z,int facing,int tick,int jump){
     int dx=0,dz=0,moving,phase,step,bob,ear,tail,y,lean,squash,dir=facing?1:-1;
@@ -52,7 +50,6 @@ static void camera_follow'''
 src,n=pat.subn(rep,src,count=1)
 if n!=1: raise SystemExit('v4 Moko replacement failed')
 
-# Add gentle authored pitch/yaw changes to the existing camera zones. No cuts.
 old='cam_follow_x+=(tx-cam_follow_x)/9;cam_follow_z+=(tz-cam_follow_z)/11;\n}'
 new='''cam_follow_x+=(tx-cam_follow_x)/9;cam_follow_z+=(tz-cam_follow_z)/11;
     {int target_pitch=188,target_yaw=0;if(px<82)target_pitch=176;else if(px>176&&px<226){target_pitch=194;target_yaw=facing?10:-10;}else if(px>=226&&px<286)target_pitch=202;else if(px>=286){target_pitch=181;target_yaw=-8;}cam_pitch_v4+=(target_pitch-cam_pitch_v4)/12;cam_yaw_v4+=(target_yaw-cam_yaw_v4)/14;}
@@ -60,7 +57,6 @@ new='''cam_follow_x+=(tx-cam_follow_x)/9;cam_follow_z+=(tz-cam_follow_z)/11;
 if old not in src: raise SystemExit('v4 camera anchor missing')
 src=src.replace(old,new,1)
 
-# Camera rotation and dawn/ground colour gradients are applied in the actual village draw.
 old='if(!ready)world3d_init();camera_follow(px,py,facing);\n    t.vx=-cam_follow_x;t.vy=-82;t.vz=132-(cam_follow_z-1120)/19;TransMatrix(&cam,&t);gte_SetRotMatrix(&cam);gte_SetTransMatrix(&cam);\n    road(ot,pk);'
 new='''if(!ready)world3d_init();camera_follow(px,py,facing);
     {SVECTOR vr={cam_pitch_v4,cam_yaw_v4,0,0};RotMatrix(&vr,&cam);}
@@ -74,4 +70,5 @@ old_h='quad3(ot,pk,7,(V3){-1450,-460,1870},(V3){1450,-460,1870},(V3){1450,188,18
 new_h='quad3g(ot,pk,7,(V3){-1450,-460,1870},(V3){1450,-460,1870},(V3){1450,188,1870},(V3){-1450,188,1870},47,60,91,154,103,91);'
 if old_h not in src: raise SystemExit('v4 horizon anchor missing')
 src=src.replace(old_h,new_h,1)
-pathlib.Path(sys.argv[2]).write_text(src)
+out=pathlib.Path(sys.argv[2]);out.write_text(src)
+subprocess.check_call([sys.executable,str(pathlib.Path(__file__).with_name('build_world3d_slice_v5.py')),str(out),str(out)])
