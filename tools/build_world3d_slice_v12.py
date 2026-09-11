@@ -4,10 +4,6 @@ if 'VILLAGE 3D V13 REV 303' not in src:
     raise SystemExit('Village v13 marker missing')
 src=src.replace('VILLAGE 3D V13 REV 303','VILLAGE 3D V23 REV 313 / VILLAGE 3D V22 REV 312 / VILLAGE 3D V20 REV 310 / VILLAGE 3D V13 REV 303',1)
 
-# REV313 keeps the stable REV312 staging but makes the protagonist a real
-# authored triangle mesh instead of a stack of runtime boxes.  This follows the
-# model-first pipeline demonstrated by the open PS1 graphics demo referenced by
-# the user while keeping all MOKO geometry original.
 src=re.sub(r'\s*tree\(ot,pk,-?\d+,\d+\);','',src)
 
 road_pat=re.compile(r'static void road\(uint32_t\*ot,char\*\*pk\)\{.*?\}\nstatic void awning',re.S)
@@ -70,8 +66,8 @@ src=re.sub(r'gte_SetGeomOffset\(160,\d+\);gte_SetGeomScreen\(\d+\);','gte_SetGeo
 src=re.sub(r't\.vx=-cam_follow_x;t\.vy=-?\d+;t\.vz=\d+-\(cam_follow_z-1120\)/\d+;',
            't.vx=-cam_follow_x;t.vy=-58;t.vz=102-(cam_follow_z-1120)/20;',src,count=1)
 
-moko_pat=re.compile(r'static void moko\(uint32_t\*ot,char\*\*pk,int x,int gy,int z,int facing,int tick,int jump\)\{.*?\}\nstatic void camera_follow',re.S)
-moko_rep=r'''static void moko(uint32_t*ot,char**pk,int x,int gy,int z,int facing,int tick,int jump){
+moko_pat=re.compile(r'static void moko_mesh_draw\(uint32_t\*ot,char\*\*pk,int x,int gy,int z,int facing,int tick,int jump\)\{.*?\}\nstatic void moko',re.S)
+moko_rep=r'''static void moko_mesh_draw(uint32_t*ot,char**pk,int x,int gy,int z,int facing,int tick,int jump){
     static const V3 mv[]={
       {-28,72,18},{28,72,18},{-38,118,14},{38,118,14},{-28,151,18},{28,151,18},{0,92,-24},{0,139,-20},
       {-39,27,12},{39,27,12},{-43,64,9},{43,64,9},{-25,80,7},{25,80,7},{0,25,-25},{0,70,-33},
@@ -98,9 +94,9 @@ moko_rep=r'''static void moko(uint32_t*ot,char**pk,int x,int gy,int z,int facing
     tri3(ot,pk,1,(V3){x+4*sx,sy+49-bob,z-37},(V3){x+11*sx,sy+49-bob,z-36},(V3){x+8*sx,sy+55-bob,z-38},248,244,250);
     tri3(ot,pk,1,(V3){x-4*sx,sy+63-bob,z-41},(V3){x+4*sx,sy+63-bob,z-41},(V3){x,sy+69-bob,z-43},232,103,147);
 }
-static void camera_follow'''
+static void moko'''
 src,n=moko_pat.subn(moko_rep,src,count=1)
-if n!=1: raise SystemExit('rev313 triangulated Moko replacement failed')
+if n!=1: raise SystemExit('rev313 triangulated Moko mesh renderer missing')
 
 src+='\n/* REV313 MODEL-FIRST PASS: TRIANGULATED MOKO / STABLE VILLAGE FRAMING */\n'
 pathlib.Path(sys.argv[2]).write_text(src)
