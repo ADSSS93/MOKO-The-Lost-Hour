@@ -70,7 +70,7 @@ src=re.sub(r'gte_SetGeomOffset\(160,\d+\);gte_SetGeomScreen\(\d+\);','gte_SetGeo
 src=re.sub(r't\.vx=-cam_follow_x;t\.vy=-?\d+;t\.vz=\d+-\(cam_follow_z-1120\)/\d+;',
            't.vx=-cam_follow_x;t.vy=-58;t.vz=102-(cam_follow_z-1120)/20;',src,count=1)
 
-moko_pat=re.compile(r'static void moko\(uint32_t\*ot,char\*\*pk,int x,int gy,int z,int facing,int tick,int jump\)\{.*?\n\}\nstatic void camera_follow',re.S)
+moko_pat=re.compile(r'static void moko\(uint32_t\*ot,char\*\*pk,int x,int gy,int z,int facing,int tick,int jump\)\{.*?\}\nstatic void camera_follow',re.S)
 moko_rep=r'''static void moko(uint32_t*ot,char**pk,int x,int gy,int z,int facing,int tick,int jump){
     static const V3 mv[]={
       {-28,72,18},{28,72,18},{-38,118,14},{38,118,14},{-28,151,18},{28,151,18},{0,92,-24},{0,139,-20},
