@@ -23,6 +23,13 @@ typedef struct {
     char packets[PACKET_LEN];
 } Frame;
 
+typedef enum {
+    MOKO_IDLE=0,
+    MOKO_RUN=1,
+    MOKO_JUMP=2,
+    MOKO_ATTACK=3
+} MokoAnim;
+
 static Frame fb[2];
 static int active=0;
 static char *packet;
@@ -37,6 +44,8 @@ static int facing=1;
 static int jump_h=0;
 static int jump_v=0;
 static int attack_timer=0;
+static int attack_connected=0;
+static int player_moving=0;
 static int cam_x=0;
 static int cam_z=120;
 
@@ -148,11 +157,19 @@ static void face_color(int kind,int face,int *r,int *g,int *b){
 }
 
 static void emit_triangle(short ax,short ay,short az,short bx,short by,short bz,short cx,short cy,short cz,int r,int g,int b){
-    POLY_F3 *p=(POLY_F3*)packet;
+    POLY_F3 *p;
     SVECTOR a={ax,ay,az,0},bb={bx,by,bz,0},c={cx,cy,cz,0};
     int32_t s0,s1,s2,flag;
-    int zavg=((int)az+(int)bz+(int)cz)/3-cam_z;
-    int depth=clampi(zavg/4,1,OT_SIZE-2);
+    int zavg;
+    int depth;
+
+    /* Reject geometry before projection when it approaches the camera plane.
+       This prevents the giant black/wedge artifacts seen in the failed Village baseline. */
+    if((int)az-cam_z<72 || (int)bz-cam_z<72 || (int)cz-cam_z<72) return;
+
+    zavg=((int)az+(int)bz+(int)cz)/3-cam_z;
+    depth=clampi(zavg/4,1,OT_SIZE-2);
+    p=(POLY_F3*)packet;
     setPolyF3(p);
     setRGB0(p,r,g,b);
     gte_ldv3(&a,&bb,&c);
@@ -165,20 +182,49 @@ static void emit_triangle(short ax,short ay,short az,short bx,short by,short bz,
     }
 }
 
+static void animate_moko_vertex(MokoMeshV *p,int anim){
+    int phase=(tick/4)&3;
+    int gait=(phase==1)?6:((phase==3)?-6:0);
+
+    if(anim==MOKO_IDLE){
+        if((p->y<35) && (p->x<-15 || p->x>15)) p->y-=((tick/16)&1)*3;
+        if(p->x>45) p->z+=((tick/10)&3)-1;
+        return;
+    }
+    if(anim==MOKO_RUN){
+        if(p->y>=140 && p->x<0) p->x-=gait;
+        if(p->y>=140 && p->x>0) p->x+=gait;
+        if(p->x>45) p->y+=phase-1;
+        return;
+    }
+    if(anim==MOKO_JUMP){
+        if(p->y>=140) p->y-=10;
+        if(p->y<35 && (p->x<-15 || p->x>15)) p->x+=(p->x<0?-4:4);
+        if(p->x>45) p->y-=7;
+        return;
+    }
+    if(anim==MOKO_ATTACK){
+        if(p->x>45){
+            p->x+=22;
+            p->y-=10;
+            p->z+=10;
+        }
+        if(p->y>=140) p->y-=4;
+    }
+}
+
 static void draw_mesh(const MokoMeshV *v,const MokoMeshF *f,int face_count,int ox,int oy,int oz,int mirror,int kind,int anim){
     int i;
     for(i=0;i<face_count;i++){
         MokoMeshV aa=v[f[i].a],bb=v[f[i].b],cc=v[f[i].c];
         int r,g,b;
-        int step=(anim==1)?(((tick/5)&3)==1?5:(((tick/5)&3)==3?-5:0)):0;
-        int bob=(anim==1)?((tick/6)&1)*2:0;
+        int bob=0;
         if(kind==1){
-            if(f[i].a>=22&&f[i].a<=29) aa.x+=(aa.x<0?-step:step);
-            if(f[i].b>=22&&f[i].b<=29) bb.x+=(bb.x<0?-step:step);
-            if(f[i].c>=22&&f[i].c<=29) cc.x+=(cc.x<0?-step:step);
-            if(f[i].a>=46) aa.y+=((tick/5)&3)-1;
-            if(f[i].b>=46) bb.y+=((tick/5)&3)-1;
-            if(f[i].c>=46) cc.y+=((tick/5)&3)-1;
+            animate_moko_vertex(&aa,anim);
+            animate_moko_vertex(&bb,anim);
+            animate_moko_vertex(&cc,anim);
+            if(anim==MOKO_RUN) bob=((tick/4)&1)*3;
+            else if(anim==MOKO_IDLE) bob=((tick/18)&1);
         }
         face_color(kind,i,&r,&g,&b);
         emit_triangle(
@@ -199,17 +245,20 @@ static void draw_crystal(int x,int y,int z,int pulse){
 
 static void draw_gate_glow(void){
     if(!area_clear)return;
-    emit_triangle(-38,30,1660,38,30,1660,0,92,1655,101,237,213);
-    emit_triangle(-28,40,1658,28,40,1658,0,84,1653,219,186,90);
+    emit_triangle(-38,30,1768,38,30,1768,0,92,1763,101,237,213);
+    emit_triangle(-28,40,1766,28,40,1766,0,84,1761,219,186,90);
 }
 
 static void update_game(void){
     uint16_t now=buttons();
     int speed=7;
-    if(!(now&PAD_LEFT)){player_x-=speed;facing=0;}
-    if(!(now&PAD_RIGHT)){player_x+=speed;facing=1;}
-    if(!(now&PAD_UP)) player_z+=speed;
-    if(!(now&PAD_DOWN)) player_z-=speed;
+    int dx=0,dz=0;
+
+    if(!(now&PAD_LEFT)){player_x-=speed;facing=0;dx=-speed;}
+    if(!(now&PAD_RIGHT)){player_x+=speed;facing=1;dx=speed;}
+    if(!(now&PAD_UP)){player_z+=speed;dz=speed;}
+    if(!(now&PAD_DOWN)){player_z-=speed;dz=-speed;}
+    player_moving=(dx||dz);
     player_x=clampi(player_x,-245,245);
     player_z=clampi(player_z,865,1775);
 
@@ -219,7 +268,10 @@ static void update_game(void){
         jump_v-=2;
         if(jump_h<=0){jump_h=0;jump_v=0;}
     }
-    if(pressed(now,PAD_SQUARE))attack_timer=12;
+    if(pressed(now,PAD_SQUARE)){
+        attack_timer=12;
+        attack_connected=0;
+    }
     if(attack_timer>0)attack_timer--;
 
     if(!talked_clockmaker && absi(player_x+105)<75 && absi(player_z-1210)<90 && pressed(now,PAD_CIRCLE)) talked_clockmaker=1;
@@ -230,24 +282,34 @@ static void update_game(void){
             splinters++;
         }
     }
-    if(splinters==3 && boar_hp>0 && attack_timer>5 && absi(player_x-95)<82 && absi(player_z-1700)<92){
+    if(splinters==3 && boar_hp>0 && attack_timer>5 && !attack_connected && absi(player_x-95)<82 && absi(player_z-1700)<92){
         boar_hp--;
+        attack_connected=1;
         player_z-=25;
     }
     if(boar_hp<=0 && splinters==3 && player_z>1740) area_clear=1;
 
-    cam_x+=(player_x-cam_x)/10;
+    {
+        int cam_dx=player_x-cam_x;
+        if(absi(cam_dx)>24) cam_x+=(cam_dx-(cam_dx<0?-24:24))/7;
+    }
     {
         int target_z=player_z-760;
-        cam_z+=(target_z-cam_z)/12;
+        int cam_dz=target_z-cam_z;
+        if(absi(cam_dz)>18) cam_z+=(cam_dz-(cam_dz<0?-18:18))/9;
     }
     old_btn=now;
 }
 
 static void draw_scene(void){
     int i;
+    int moko_anim=MOKO_IDLE;
+    if(attack_timer>0) moko_anim=MOKO_ATTACK;
+    else if(jump_h>0) moko_anim=MOKO_JUMP;
+    else if(player_moving) moko_anim=MOKO_RUN;
+
     draw_mesh(village_v,village_f,VILLAGE_FACES,0,0,0,0,0,0);
-    draw_mesh(moko_v,moko_f,MOKO_FACES,player_x,8-jump_h,player_z,!facing,1,1);
+    draw_mesh(moko_v,moko_f,MOKO_FACES,player_x,8-jump_h,player_z,!facing,1,moko_anim);
     draw_mesh(clockmaker_v,clockmaker_f,CLOCKMAKER_FACES,-105,3,1210,0,2,0);
     if(talked_clockmaker){
         for(i=0;i<3;i++) if(!splinter_taken[i]) draw_crystal(splinter_x[i],126,splinter_z[i],tick/6+i);
@@ -258,9 +320,9 @@ static void draw_scene(void){
     }
     draw_gate_glow();
     if(attack_timer>0){
-        int tx=player_x+(facing?65:-65);
+        int tx=player_x+(facing?73:-73);
         int tz=player_z+10;
-        emit_triangle(player_x+(facing?30:-30),95-jump_h,player_z-8,tx,82-jump_h,tz,tx,122-jump_h,tz+8,233,92,163);
+        emit_triangle(player_x+(facing?42:-42),94-jump_h,player_z-8,tx,80-jump_h,tz,tx,116-jump_h,tz+8,233,92,163);
     }
 }
 
