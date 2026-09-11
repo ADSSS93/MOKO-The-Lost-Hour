@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Tiny build-time OBJ -> C header converter for the clean PS1 vertical slice.
 
-This deliberately keeps authoring data outside the renderer: artists edit OBJ,
-CMake converts it to compact fixed-point vertex/triangle tables, and the PS1
-runtime only sees static arrays. Only v/f records are required for now.
+Authoring stays in OBJ. CMake converts meshes to compact fixed-point tables so
+runtime code remains clean and does not contain generated geometry literals.
+Only v/f records are required for the first clean vertical slice.
 """
 from pathlib import Path
 import re, sys
@@ -11,7 +11,7 @@ import re, sys
 if len(sys.argv) != 4:
     raise SystemExit("usage: obj_to_header.py input.obj output.h symbol")
 
-src, out, sym = map(Path, sys.argv[:3]) if False else (Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3])
+src, out, sym = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
 if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", sym):
     raise SystemExit("invalid C symbol")
 
@@ -28,8 +28,7 @@ for raw in src.read_text().splitlines():
         ids=[]
         for tok in p[1:]:
             i=int(tok.split('/')[0])
-            if i<0: i=len(verts)+i
-            else: i-=1
+            i=(len(verts)+i) if i<0 else (i-1)
             ids.append(i)
         for i in range(1,len(ids)-1):
             faces.append((ids[0],ids[i],ids[i+1]))
@@ -46,8 +45,10 @@ out.parent.mkdir(parents=True, exist_ok=True)
 guard=f"MOKO_GEN_{sym.upper()}_H"
 with out.open('w') as fp:
     fp.write(f"#ifndef {guard}\n#define {guard}\n")
+    fp.write("#ifndef MOKO_GENERATED_MESH_TYPES\n#define MOKO_GENERATED_MESH_TYPES\n")
     fp.write("typedef struct { short x,y,z; } MokoMeshV;\n")
     fp.write("typedef struct { unsigned short a,b,c; } MokoMeshF;\n")
+    fp.write("#endif\n")
     fp.write(f"static const MokoMeshV {sym}_v[]={{\n")
     for v in verts: fp.write(f"  {{{v[0]},{v[1]},{v[2]}}},\n")
     fp.write("};\n")
@@ -56,4 +57,4 @@ with out.open('w') as fp:
     fp.write("};\n")
     fp.write(f"#define {sym.upper()}_VERTS {len(verts)}\n")
     fp.write(f"#define {sym.upper()}_FACES {len(faces)}\n")
-    fp.write(f"#endif\n")
+    fp.write("#endif\n")
