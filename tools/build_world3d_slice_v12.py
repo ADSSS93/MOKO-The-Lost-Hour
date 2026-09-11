@@ -4,8 +4,6 @@ if 'VILLAGE 3D V13 REV 303' not in src:
     raise SystemExit('Village v13 marker missing')
 src=src.replace('VILLAGE 3D V13 REV 303','VILLAGE 3D V19 REV 309 / VILLAGE 3D V18 REV 308 / VILLAGE 3D V17 REV 307 / VILLAGE 3D V16 REV 306 / VILLAGE 3D V15 REV 305 / VILLAGE 3D V14 REV 304 / VILLAGE 3D V13 REV 303',1)
 
-# In the generated source, V3 inserts authored helpers between road() and villager().
-# Stop at awning(), the first helper, so replacing road never deletes scene helpers.
 road_pat=re.compile(r'static void road\(uint32_t\*ot,char\*\*pk\)\{.*?\}\nstatic void awning',re.S)
 road_rep=r'''static void road(uint32_t*ot,char**pk){
     int i;
@@ -21,12 +19,15 @@ static void awning'''
 src,n=road_pat.subn(road_rep,src,count=1)
 if n!=1: raise SystemExit('rev309 safe road replacement failed')
 
-pat=re.compile(r'static void commercial_foreground_v13\(uint32_t\*ot,char\*\*pk,int tick\)\{.*?\}',re.S)
+# Match whole function through the next known function declaration; do not parse
+# braces because V3 compound literals contain many braces themselves.
+pat=re.compile(r'static void commercial_foreground_v13\(uint32_t\*ot,char\*\*pk,int tick\)\{.*?\nstatic void playable_area_frame_v10',re.S)
 replacement=r'''static void commercial_foreground_v13(uint32_t*ot,char**pk,int tick){
     (void)tick;
     quad3g(ot,pk,7,(V3){-1480,188,770},(V3){1480,188,770},(V3){1220,188,960},(V3){-1220,188,960},57,54,55,82,68,59);
     quad3g(ot,pk,6,(V3){-440,184,775},(V3){440,184,775},(V3){355,184,1115},(V3){-355,184,1115},119,98,70,162,129,79);
-}'''
+}
+static void playable_area_frame_v10'''
 src,n=pat.subn(replacement,src,count=1)
 if n!=1: raise SystemExit('rev309 foreground replacement failed')
 src=src.replace('foreground_frame(ot,pk,tick);','/* REV309 old foreground disabled */')
