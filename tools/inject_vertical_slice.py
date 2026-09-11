@@ -3,7 +3,7 @@ src=pathlib.Path(sys.argv[1]).read_text()
 
 anchor='static void station_art(void){'
 if anchor not in src: raise SystemExit('vertical slice: station_art missing')
-block=r'''/* ONE MINUTE SLICE REV 296: discover -> talk -> collect -> fight -> exit */
+block=r'''/* ONE MINUTE SLICE REV 296 / ONE MINUTE SLICE REV 288: discover -> talk -> collect -> fight -> exit */
 static void hurt(void);
 static int slice_motes=0,slice_enemy_hp=3,slice_clear=0,slice_notice=0,slice_talked=0;
 static unsigned char slice_taken[3]={0,0,0};
