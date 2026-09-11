@@ -22,7 +22,7 @@ src=src.replace('world_runtime_reset(&living,0);for(i=0;i<4;i++)','world_runtime
 
 anchor='static void station_art(void){'
 if anchor not in src: raise SystemExit('vertical slice: station_art missing')
-block=r'''/* VILLAGE OF DAWN PLAYABLE AREA REV 298
+block=r'''/* VILLAGE OF DAWN PLAYABLE AREA REV 300
    ONE MINUTE SLICE REV 288 compatibility marker.
    One authored loop: discover -> talk -> collect -> fight -> gate -> clear. */
 static void hurt(void);
@@ -59,7 +59,11 @@ static void slice_tick(uint16_t n){
     }
     if(slice_talked&&slice_motes==3&&slice_enemy_hp>0){
         if(hit(px,py,12,18,ex-34,140,68,55)){
-            if(pressed(n,PAD_CIRCLE)&&moko_tail_cooldown<=1){
+            /* moko_tail_tick() runs before this function. A fresh Circle press has
+               already set moko_tail_timer=10 and cooldown=18, so testing cooldown
+               <=1 made the boss literally invulnerable in REV298. The active tail
+               window is the correct source of truth. */
+            if(pressed(n,PAD_CIRCLE)&&moko_tail_timer>=8){
                 slice_enemy_hp--;score+=125;gameplay_reward(&gameplay,25);sfx(0x2600);slice_notice=55;
                 if(px<ex)px-=11;else px+=11;moko_vx=0;
                 if(slice_enemy_hp<=0){slice_stage=4;score+=250;sfx(0x2f00);}
@@ -102,5 +106,5 @@ hud_anchor='static void hud(void){'
 if hud_anchor not in src: raise SystemExit('vertical slice: hud function missing')
 src=src.replace(hud_anchor,'static void hud(void){if(room==0){slice_hud();FntFlush(font_id);return;}',1)
 
-src+='\n/* PLAYABLE VILLAGE REV 298: isolated collision / checkpoints / mission loop / area clear */\n'
+src+='\n/* PLAYABLE VILLAGE REV 300: boss hit window verified against tail update order */\n'
 pathlib.Path(sys.argv[2]).write_text(src)
