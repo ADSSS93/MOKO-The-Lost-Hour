@@ -1,4 +1,4 @@
-import pathlib,re,sys
+import pathlib,re,sys,subprocess
 src=pathlib.Path(sys.argv[1]).read_text()
 if 'VILLAGE 3D V6 REV 294' not in src: raise SystemExit('Village v6 marker missing')
 src=src.replace('VILLAGE 3D V6 REV 294','VILLAGE 3D V7 REV 295 / VILLAGE 3D V6 REV 294',1)
@@ -55,4 +55,5 @@ replace='''prism(ot,pk,x+moko_lean_v6/3+(dir*3),y+52-bob,z-31,11,10,7,232,105,14
     prism(ot,pk,x+31+moko_lean_v6/3,y+52-bob,z-20,12,10,14,128,61,171);'''
 if needle not in src: raise SystemExit('v7 Moko face anchor missing')
 src=src.replace(needle,replace,1)
-pathlib.Path(sys.argv[2]).write_text(src)
+out=pathlib.Path(sys.argv[2]);out.write_text(src)
+subprocess.check_call([sys.executable,str(pathlib.Path(__file__).with_name('build_world3d_slice_v8.py')),str(out),str(out)])
