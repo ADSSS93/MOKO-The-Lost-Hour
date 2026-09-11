@@ -1,5 +1,5 @@
-# Village of Dawn vertical slice REV315
-# Original PS1-style environment mesh: lane, four side buildings, roofs, central arch and clock tower.
+# Village of Dawn vertical slice REV316
+# Original PS1-style environment mesh: continuous lane, side buildings, market props, arch and clock tower.
 o VillageDawn
 # lane strip
 v -330 184 850
@@ -96,6 +96,49 @@ v 125 -105 1740
 v 0 -205 1825
 v -125 -105 1910
 v 125 -105 1910
+# left market stall beside playable lane
+v -410 184 1260
+v -300 184 1260
+v -410 118 1260
+v -300 118 1260
+v -410 184 1360
+v -300 184 1360
+v -410 118 1360
+v -300 118 1360
+v -430 112 1245
+v -280 112 1245
+v -355 70 1305
+v -430 112 1375
+v -280 112 1375
+# right awning / produce booth
+v 300 184 1370
+v 420 184 1370
+v 300 120 1370
+v 420 120 1370
+v 300 184 1475
+v 420 184 1475
+v 300 120 1475
+v 420 120 1475
+v 280 114 1350
+v 440 114 1350
+v 360 76 1420
+v 280 114 1495
+v 440 114 1495
+# two slim dawn-clock signposts
+v -250 184 1510
+v -232 184 1510
+v -250 72 1510
+v -232 72 1510
+v -270 72 1508
+v -212 72 1508
+v -241 38 1508
+v 230 184 1180
+v 248 184 1180
+v 230 76 1180
+v 248 76 1180
+v 210 76 1178
+v 268 76 1178
+v 239 42 1178
 # lane
 f 1 2 4
 f 1 4 3
@@ -174,3 +217,32 @@ f 81 83 82
 f 81 84 83
 f 84 85 83
 f 82 83 85
+# left market stall body and canopy
+f 86 87 89
+f 86 89 88
+f 90 92 93
+f 90 93 91
+f 86 88 92
+f 86 92 90
+f 94 95 96
+f 94 96 97
+f 97 96 98
+f 95 98 96
+# right booth body and canopy
+f 99 100 102
+f 99 102 101
+f 103 105 106
+f 103 106 104
+f 99 103 104
+f 99 104 100
+f 107 108 109
+f 107 109 110
+f 110 109 111
+f 108 111 109
+# dawn-clock signposts
+f 112 113 115
+f 112 115 114
+f 116 117 118
+f 119 120 122
+f 119 122 121
+f 123 124 125
