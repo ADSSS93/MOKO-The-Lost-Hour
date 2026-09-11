@@ -2,6 +2,7 @@ import pathlib,re,sys
 src=pathlib.Path(sys.argv[1]).read_text()
 if 'VILLAGE 3D V3 REV 291' not in src: raise SystemExit('Village v3 marker missing')
 src=src.replace('VILLAGE 3D V3 REV 291','VILLAGE 3D V4 REV 292 / VILLAGE 3D V3 REV 291',1)
+src=src.replace('VECTOR t={0,-70,110,0}','VECTOR t={0,-70,110}',1)
 
 # Per-vertex colour is the cheapest PS1-era way to remove the flat tech-demo look
 # without introducing borrowed textures/assets. Geometry remains true XYZ/GTE.
@@ -31,6 +32,7 @@ rep=r'''static void moko(uint32_t*ot,char**pk,int x,int gy,int z,int facing,int 
     bob=moving?((phase&1)*3):((tick/28)&1);ear=moving?((tick/15)&1)*3:0;tail=((tick/(moving?5:11))&3)-1;
     lean=clampi(dx/2,-8,8);squash=moko_land_squash?5:0;y=gy-jump+squash;
     shadow(ot,pk,x,z,37,jump);
+    /* compact pear-shaped feline body; retained as the v3 regression contract */
     prism(ot,pk,x+lean,y+72-bob,z+4,68+squash,76-squash,58,98,49,149);
     box3(ot,pk,x-29+lean,y+91-bob,z-1,58,48-squash,54,112,58,164);
     prism(ot,pk,x+lean/2,y+27-bob,z-2,84,63,58,143,77,187);
