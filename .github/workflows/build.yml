@@ -44,22 +44,27 @@ jobs:
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
           test -f build/generated/main_visual.c || { echo 'Generated gameplay source missing'; exit 1; }
-          grep -q 'VILLAGE PRESENTATION REV 289' src/world3d.c || { echo 'Village presentation revision missing'; exit 1; }
-          grep -q 'SVECTOR rot={155,0,0,0}' src/world3d.c || { echo 'Cinematic camera pitch missing'; exit 1; }
-          grep -q 'clock_tower' src/world3d.c || { echo 'Village landmark missing'; exit 1; }
-          grep -q 'static void lamp' src/world3d.c || { echo 'Village authored lighting props missing'; exit 1; }
-          grep -q 'int step=(phase==1?7:(phase==3?-7:0))' src/world3d.c || { echo 'Articulated Moko gait missing'; exit 1; }
+          grep -q 'VILLAGE 3D V2 REV 290' src/world3d_v2.c || { echo 'Village 3D v2 revision missing'; exit 1; }
+          grep -q 'camera_follow' src/world3d_v2.c || { echo 'Spring camera follow missing'; exit 1; }
+          grep -q 'cam_follow_x+=(tx-cam_follow_x)/8' src/world3d_v2.c || { echo 'Camera smoothing missing'; exit 1; }
+          grep -q 'static void road' src/world3d_v2.c || { echo 'Authored 3D road missing'; exit 1; }
+          grep -q 'static void tower' src/world3d_v2.c || { echo 'Village landmark missing'; exit 1; }
+          grep -q 'static void prism' src/world3d_v2.c || { echo 'Low-poly prism geometry missing'; exit 1; }
+          grep -q 'static void boar' src/world3d_v2.c || { echo '3D Shadow Boar missing'; exit 1; }
+          grep -q 'static void villager' src/world3d_v2.c || { echo '3D villager missing'; exit 1; }
+          grep -q 'static void moko' src/world3d_v2.c || { echo 'Low-poly Moko missing'; exit 1; }
+          grep -q 'src/world3d_v2.c' CMakeLists.txt || { echo 'Renderer v2 not compiled'; exit 1; }
+          ! grep -q 'src/world3d.c)' CMakeLists.txt || { echo 'Legacy renderer still compiled'; exit 1; }
           grep -q 'REAL 3D VERTICAL SLICE REV 288' build/generated/main_visual.c || { echo '3D depth/jump slice missing'; exit 1; }
           grep -q 'world3d_draw_village(px,py,moko_z/16' build/generated/main_visual.c || { echo '3D jump state not wired'; exit 1; }
           grep -q 'ONE MINUTE SLICE REV 288' build/generated/main_visual.c || { echo 'Village mission revision missing'; exit 1; }
           grep -q 'VILLAGER AHEAD   CROSS: TALK' build/generated/main_visual.c || { echo 'Village NPC mission step missing'; exit 1; }
-          grep -q 'static int wz(int sy)' src/world3d.c || { echo 'Ground-plane depth mapping missing'; exit 1; }
           grep -q 'COMMERCIAL VISUAL REV 283' build/generated/main_visual.c || { echo 'Commercial visual revision missing'; exit 1; }
           grep -q 'D-PAD  MOVE' build/generated/main_visual.c || { echo 'Compact movement onboarding missing'; exit 1; }
           grep -q 'MOKO VISUAL REV 284' src/moko_sprite.c || { echo 'Moko renderer visual revision missing'; exit 1; }
           grep -q 'MOKO VISUAL REV 284' tools/generate_moko_tim.py || { echo 'Moko TIM generator revision missing'; exit 1; }
-          grep -q 'gte_SetGeomOffset' src/world3d.c || { echo '3D GTE renderer missing'; exit 1; }
-          grep -q 'world3d_draw_station' src/world3d.c || { echo '3D station renderer missing'; exit 1; }
+          grep -q 'gte_SetGeomOffset' src/world3d_v2.c || { echo '3D GTE renderer missing'; exit 1; }
+          grep -q 'world3d_draw_station' src/world3d_v2.c || { echo '3D station renderer missing'; exit 1; }
           grep -a -q 'MOKO COMBAT FEEDBACK REV 281' "$EXE" || { echo 'Moko combat feedback revision missing'; exit 1; }
           grep -a -q 'HOUR CHAMBER POLISH REV 280' "$EXE" || { echo 'Hour Chamber polish revision missing'; exit 1; }
           grep -q 'TIME ANCHORS %d/3  STABILITY %d%%' build/generated/main_visual.c || { echo 'Hour Chamber anchor HUD missing'; exit 1; }
@@ -100,12 +105,12 @@ jobs:
           BIN_SHA=$(sha256sum dist/MOKO.bin | awk '{print $1}')
           BIN_SIZE=$(stat -c%s dist/MOKO.bin)
           CUE_SHA=$(sha256sum dist/MOKO.cue | awk '{print $1}')
-          printf 'MOKO Village presentation rev 289\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
+          printf 'MOKO Village 3D v2 rev 290\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
           cat dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-3d-rev289-run${{ github.run_number }}
+          name: MOKO-PS1-3d-v2-rev290-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
