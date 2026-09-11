@@ -31,7 +31,6 @@ jobs:
           echo "/opt/psn00bsdk/bin" >> "$GITHUB_PATH"
           echo "PSN00BSDK_LIBS=/opt/psn00bsdk/lib/libpsn00b" >> "$GITHUB_ENV"
           /opt/psn00bsdk/bin/mipsel-none-elf-gcc --version
-          /opt/psn00bsdk/bin/mkpsxiso --help >/dev/null || true
 
       - name: Configure MOKO
         run: cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$PSN00BSDK_LIBS/cmake/sdk.cmake" -DCMAKE_BUILD_TYPE=Release
@@ -39,72 +38,35 @@ jobs:
       - name: Build MOKO BIN/CUE
         run: cmake --build build
 
-      - name: Verify authored level and gameplay revisions are compiled
+      - name: Verify clean vertical slice architecture
         run: |
           EXE=build/moko
           test -f "$EXE" || EXE=build/moko.exe
-          test -f build/generated/main_visual.c || { echo 'Generated gameplay source missing'; exit 1; }
-          test -f build/generated/world3d_slice_v3.c || { echo 'Generated Village 3D source missing'; exit 1; }
-          grep -q 'VILLAGE 3D V6 REV 294' build/generated/world3d_slice_v3.c || { echo 'Village 3D rev294 missing'; exit 1; }
-          grep -q 'VILLAGE 3D V5 REV 293' build/generated/world3d_slice_v3.c || { echo 'Village 3D rev293 regression'; exit 1; }
-          grep -q 'VILLAGE 3D V13 REV 303' build/generated/world3d_slice_v3.c || { echo 'Village structural rev303 missing'; exit 1; }
-          grep -q 'static void plaza' build/generated/world3d_slice_v3.c || { echo 'Village plaza staging missing'; exit 1; }
-          grep -q 'static void awning' build/generated/world3d_slice_v3.c || { echo 'Village market geometry missing'; exit 1; }
-          grep -q 'static void arch' build/generated/world3d_slice_v3.c || { echo 'Village arch landmark missing'; exit 1; }
-          grep -q 'static void foliage' build/generated/world3d_slice_v3.c || { echo 'Village foliage geometry missing'; exit 1; }
-          grep -q 'static void mission_beacon' build/generated/world3d_slice_v3.c || { echo 'In-world mission feedback missing'; exit 1; }
-          grep -q 'cam_vel_x_v5' build/generated/world3d_slice_v3.c || { echo 'Spring camera missing'; exit 1; }
-          grep -q 'absi(dx)>12' build/generated/world3d_slice_v3.c || { echo 'Camera dead-zone missing'; exit 1; }
-          grep -q 'boar_hit_v5' build/generated/world3d_slice_v3.c || { echo 'Boar hit reaction missing'; exit 1; }
-          grep -q 'gate_open_v5' build/generated/world3d_slice_v3.c || { echo 'Animated Dawn Gate missing'; exit 1; }
-          grep -q 'foreground_frame' build/generated/world3d_slice_v3.c || { echo 'Foreground geometry regression'; exit 1; }
-          grep -q 'moko_speed_v6' build/generated/world3d_slice_v3.c || { echo 'Displacement-driven locomotion missing'; exit 1; }
-          grep -q 'moko_cycle_v6' build/generated/world3d_slice_v3.c || { echo 'Eight-step gait support missing'; exit 1; }
-          grep -q 'brief world-space dust' build/generated/world3d_slice_v3.c || { echo 'Moko footstep/landing feedback missing'; exit 1; }
-          grep -q 'one arm lifts and waves' build/generated/world3d_slice_v3.c || { echo 'Villager greeting animation missing'; exit 1; }
-          grep -q 'dawn_gate_flourish' build/generated/world3d_slice_v3.c || { echo 'Mission completion flourish missing'; exit 1; }
-          grep -q 'MokoMeshV' build/generated/world3d_slice_v3.c || { echo 'Mesh-based Moko model missing'; exit 1; }
-          grep -q 'moko_mesh_draw' build/generated/world3d_slice_v3.c || { echo 'Mesh-based Moko renderer missing'; exit 1; }
-          grep -q 'world3d_slice_v3.c' CMakeLists.txt || { echo 'Generated 3D renderer is not compiled'; exit 1; }
-          ! grep -q 'src/world3d_v2.c)' CMakeLists.txt || { echo 'Renderer v2 is still directly linked'; exit 1; }
-          grep -q 'REAL 3D VERTICAL SLICE REV 288' build/generated/main_visual.c || { echo '3D depth/jump slice missing'; exit 1; }
-          grep -q 'world3d_draw_village(px,py,moko_z/16' build/generated/main_visual.c || { echo '3D jump state not wired'; exit 1; }
-          grep -q 'ONE MINUTE SLICE REV 288' build/generated/main_visual.c || { echo 'Village mission revision missing'; exit 1; }
-          grep -q 'VILLAGER AHEAD   CROSS: TALK' build/generated/main_visual.c || { echo 'Village NPC mission step missing'; exit 1; }
-          grep -q 'COMMERCIAL VISUAL REV 283' build/generated/main_visual.c || { echo 'Commercial visual revision missing'; exit 1; }
-          grep -q 'D-PAD  MOVE' build/generated/main_visual.c || { echo 'Compact movement onboarding missing'; exit 1; }
-          grep -q 'MOKO VISUAL REV 284' src/moko_sprite.c || { echo 'Moko renderer visual revision missing'; exit 1; }
-          grep -q 'MOKO VISUAL REV 284' tools/generate_moko_tim.py || { echo 'Moko TIM generator revision missing'; exit 1; }
-          grep -q 'gte_SetGeomOffset' build/generated/world3d_slice_v3.c || { echo '3D GTE renderer missing'; exit 1; }
-          grep -q 'world3d_draw_station' build/generated/world3d_slice_v3.c || { echo '3D station renderer missing'; exit 1; }
-          grep -a -q 'MOKO COMBAT FEEDBACK REV 281' "$EXE" || { echo 'Moko combat feedback revision missing'; exit 1; }
-          grep -a -q 'HOUR CHAMBER POLISH REV 280' "$EXE" || { echo 'Hour Chamber polish revision missing'; exit 1; }
-          grep -q 'TIME ANCHORS %d/3  STABILITY %d%%' build/generated/main_visual.c || { echo 'Hour Chamber anchor HUD missing'; exit 1; }
-          grep -q 'finale.phase_timer+=90' build/generated/main_visual.c || { echo 'Hour Chamber anchor gameplay missing'; exit 1; }
-          grep -a -q 'CLOCKWORKS EXPANSION REV 279' "$EXE" || { echo 'Clockworks expansion revision missing'; exit 1; }
-          grep -q 'CHRONO RELAYS %d/3  SENTINEL %s' build/generated/main_visual.c || { echo 'Clockworks objective HUD missing'; exit 1; }
-          grep -q 'shard_taken\[3\]&&clock_relays==3' build/generated/main_visual.c || { echo 'Clockworks progression gate missing'; exit 1; }
-          grep -a -q 'FORGOTTEN HOUSE REV 278' "$EXE" || { echo 'Forgotten House revision missing'; exit 1; }
-          grep -q 'MEMORY LIGHTS %d/3  HOUND %s' build/generated/main_visual.c || { echo 'Forgotten House mission HUD injection missing'; exit 1; }
-          grep -q 'house_lights==3&&house_hound_defeated' build/generated/main_visual.c || { echo 'Forgotten House progression gate missing'; exit 1; }
-          grep -a -q 'BACKWARD STREET REV 277' "$EXE" || { echo 'Backward Street revision missing'; exit 1; }
-          grep -a -q 'STATION LEVEL REV 276' "$EXE" || { echo 'Silent Station traversal revision missing'; exit 1; }
-          grep -a -q 'CAMERA REV 275' "$EXE" || { echo 'Scrolling camera revision missing'; exit 1; }
-          grep -a -q 'PLATFORM REV 274' "$EXE" || { echo 'Raised platform traversal revision missing'; exit 1; }
-          grep -a -q 'FEEL REV 272' "$EXE" || { echo 'Inertial movement revision missing'; exit 1; }
-          grep -a -q 'WORLD FX REV 270' "$EXE" || { echo 'Runtime world FX revision missing'; exit 1; }
-          grep -a -q 'CINEMA REV 269' "$EXE" || { echo 'Cinematic revision marker missing'; exit 1; }
-          grep -a -q 'CHAPTER I - THE LAST TRAIN' "$EXE" || { echo 'Station chapter card missing'; exit 1; }
-          grep -a -q 'THE HOUR WARDEN AWAKENS' "$EXE" || { echo 'Hour Warden intro missing'; exit 1; }
-          grep -a -q 'TITLE REV 268' "$EXE" || { echo 'Title revision marker missing'; exit 1; }
-          grep -a -q 'PAUSE REV 267' "$EXE" || { echo 'Pause revision marker missing'; exit 1; }
-          grep -a -q 'COMPASS REV 265' "$EXE" || { echo 'Objective compass revision marker missing'; exit 1; }
-          grep -a -q 'CROSS - REWIND TO CHECKPOINT' "$EXE" || { echo 'Checkpoint retry regressed'; exit 1; }
-          grep -q 'warden_phase_level' build/generated/main_visual.c || { echo 'Hour Warden phase logic regressed'; exit 1; }
-          grep -q 'sentinel_active' build/generated/main_visual.c || { echo 'Chrono Sentinel logic regressed'; exit 1; }
-          grep -q 'clock_guard_art' build/generated/main_visual.c || { echo 'Clock Guard gameplay regressed'; exit 1; }
-          grep -q 'memory_clock_near' build/generated/main_visual.c || { echo 'Memory Clock logic regressed'; exit 1; }
-          grep -a -q 'TRIANGLE - CONTINUE' "$EXE" || { echo 'Continue menu missing'; exit 1; }
+          test -f "$EXE"
+          test -f build/generated/moko_generated.h
+          test -f build/generated/village_model.h
+          test -f build/generated/clockmaker_model.h
+          test -f build/generated/boar_model.h
+          grep -q 'MOKO_FACES' build/generated/moko_generated.h
+          grep -q 'VILLAGE_FACES' build/generated/village_model.h
+          grep -q 'CLOCKMAKER_FACES' build/generated/clockmaker_model.h
+          grep -q 'BOAR_FACES' build/generated/boar_model.h
+          grep -q 'src/clean_vertical_slice.c' CMakeLists.txt
+          grep -q 'obj_to_header.py' CMakeLists.txt
+          ! grep -q 'inject_station_visuals.py' CMakeLists.txt
+          ! grep -q 'build_world3d_slice_v3.py' CMakeLists.txt
+          grep -q 'draw_mesh(village_v' src/clean_vertical_slice.c
+          grep -q 'draw_mesh(moko_v' src/clean_vertical_slice.c
+          grep -q 'TIME SPLINTERS' src/clean_vertical_slice.c
+          grep -q 'SHADOW BOAR' src/clean_vertical_slice.c
+          grep -q 'AREA CLEAR' src/clean_vertical_slice.c
+          grep -q 'gte_SetRotMatrix' src/clean_vertical_slice.c
+          grep -q 'gte_SetTransMatrix' src/clean_vertical_slice.c
+          grep -q '^v ' assets/models/moko_lowpoly.obj
+          grep -q '^v ' assets/models/village_dawn_slice.obj
+          grep -q '^v ' assets/models/clockmaker.obj
+          grep -q '^v ' assets/models/shadow_boar.obj
+          echo 'Clean OBJ -> generated mesh -> PS1 runtime pipeline verified.'
 
       - name: Collect and fingerprint disc image
         run: |
@@ -117,12 +79,12 @@ jobs:
           BIN_SHA=$(sha256sum dist/MOKO.bin | awk '{print $1}')
           BIN_SIZE=$(stat -c%s dist/MOKO.bin)
           CUE_SHA=$(sha256sum dist/MOKO.cue | awk '{print $1}')
-          printf 'MOKO Village structural rev 303\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
+          printf 'MOKO clean vertical slice\ncommit=%s\nrun=%s\nbin_sha256=%s\nbin_bytes=%s\ncue_sha256=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$BIN_SHA" "$BIN_SIZE" "$CUE_SHA" > dist/BUILD.txt
           cat dist/BUILD.txt
           ls -lh dist/MOKO.bin dist/MOKO.cue dist/BUILD.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MOKO-PS1-3d-rev303-run${{ github.run_number }}
+          name: MOKO-PS1-clean-slice-run${{ github.run_number }}
           path: dist/
           if-no-files-found: error
