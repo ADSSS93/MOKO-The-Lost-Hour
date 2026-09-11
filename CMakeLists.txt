@@ -56,7 +56,7 @@ add_custom_command(
 add_custom_target(moko_models DEPENDS
     "${MOKO_MODEL_H}" "${MOKO_VILLAGE_H}" "${MOKO_CLOCKMAKER_H}" "${MOKO_BOAR_H}")
 
-psn00bsdk_add_executable(moko GPREL src/clean_vertical_slice_textured.c)
+psn00bsdk_add_executable(moko GPREL src/clean_vertical_slice_textured_fix.c)
 target_include_directories(moko PRIVATE "${MOKO_GENERATED_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/src")
 add_dependencies(moko moko_models)
 psn00bsdk_add_cd_image(moko_cd MOKO iso.xml DEPENDS moko)
