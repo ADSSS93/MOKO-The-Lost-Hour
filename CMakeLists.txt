@@ -30,6 +30,8 @@ set(MOKO_GENERATED_STREET_BASE "${MOKO_GENERATED_DIR}/main_street_base.c")
 set(MOKO_GENERATED_HOUSE_BASE "${MOKO_GENERATED_DIR}/main_house_base.c")
 set(MOKO_GENERATED_CLOCKWORKS_BASE "${MOKO_GENERATED_DIR}/main_clockworks_base.c")
 set(MOKO_GENERATED_MAIN "${MOKO_GENERATED_DIR}/main_visual.c")
+set(MOKO_GENERATED_WORLD3D "${MOKO_GENERATED_DIR}/world3d_slice_v3.c")
+
 add_custom_command(
     OUTPUT "${MOKO_GENERATED_MAIN}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
@@ -63,7 +65,15 @@ add_custom_command(
     VERBATIM
 )
 
-psn00bsdk_add_executable(moko GPREL "${MOKO_GENERATED_MAIN}" src/moko_sprite.c src/gameplay.c src/audio.c src/finale.c src/save.c src/memcard.c src/quests.c src/world_events.c src/adventure.c src/level_data.c src/items.c src/journal.c src/ambient.c src/npc.c src/enemies.c src/world_runtime.c src/intro.c src/station_visuals.c src/world3d_v2.c)
+add_custom_command(
+    OUTPUT "${MOKO_GENERATED_WORLD3D}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v3.py" "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${MOKO_GENERATED_WORLD3D}"
+    DEPENDS "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v3.py" "${PROJECT_SOURCE_DIR}/src/world3d.h"
+    VERBATIM
+)
+
+psn00bsdk_add_executable(moko GPREL "${MOKO_GENERATED_MAIN}" "${MOKO_GENERATED_WORLD3D}" src/moko_sprite.c src/gameplay.c src/audio.c src/finale.c src/save.c src/memcard.c src/quests.c src/world_events.c src/adventure.c src/level_data.c src/items.c src/journal.c src/ambient.c src/npc.c src/enemies.c src/world_runtime.c src/intro.c src/station_visuals.c)
 target_include_directories(moko PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set(MOKO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
