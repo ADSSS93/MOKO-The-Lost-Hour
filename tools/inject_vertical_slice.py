@@ -3,18 +3,20 @@ src=pathlib.Path(sys.argv[1]).read_text()
 
 anchor='static void station_art(void){'
 if anchor not in src: raise SystemExit('vertical slice: station_art missing')
-block=r'''/* ONE MINUTE SLICE REV 288: discover -> talk -> collect -> fight -> exit */
+block=r'''/* ONE MINUTE SLICE REV 296: discover -> talk -> collect -> fight -> exit */
 static void hurt(void);
 static int slice_motes=0,slice_enemy_hp=3,slice_clear=0,slice_notice=0,slice_talked=0;
 static unsigned char slice_taken[3]={0,0,0};
+static const int slice_x[3]={112,236,274};
+static const int slice_y[3]={170,145,176};
 static void slice_art(void){
-    int i,bob=(anim_tick/8)&3,ex=500+((anim_tick/10)&1)*3;
+    int i,bob=(anim_tick/8)&3,ex=258+((anim_tick/10)&1)*2;
     if(room!=0)return;
     tri(132,186,205,186,195,198,45,52,67);tri(132,186,195,198,140,198,28,34,48);
     tri(292,174,371,174,358,187,52,60,76);tri(292,174,358,187,302,187,31,38,55);
     tri(430,162,515,162,503,177,58,62,79);tri(430,162,503,177,440,177,35,40,58);
     for(i=0;i<3;i++)if(!slice_taken[i]){
-        int x=(i==0?185:(i==1?348:452)),y=(i==0?176:(i==1?153:141));
+        int x=slice_x[i],y=slice_y[i];
         tri(x,y-7-bob,x+6,y,x,y+7+bob,78,210,231);tri(x,y-7-bob,x-6,y,x,y+7+bob,163,88,219);
         rect(x-1,y-2,3,4,241,224,143);
     }
@@ -24,27 +26,31 @@ static void slice_art(void){
         tri(ex-13,178,ex-5,175,ex-8,188,190,63,116);tri(ex+13,178,ex+5,175,ex+8,188,190,63,116);
         rect(ex-9,196,7,3,38,24,54);rect(ex+2,196,7,3,38,24,54);
     }
-    rect(596,132,5,65,54,57,70);rect(620,132,5,65,54,57,70);tri(594,132,627,132,611,119,75,65,82);
-    if(slice_enemy_hp<=0&&slice_talked){rect(603,144,15,28,24,73,72);rect(607,150,7,16,73,215,175);}
-    else{rect(603,144,15,28,65,25,43);rect(607,150,7,16,205,58,91);}
 }
 static void slice_tick(uint16_t n){
-    int i,ex=500+((anim_tick/10)&1)*3;
+    int i,ex=258;
     if(room!=0||slice_clear)return;
     for(i=0;i<3;i++)if(!slice_taken[i]){
-        int x=(i==0?185:(i==1?348:452)),y=(i==0?176:(i==1?153:141));
+        int x=slice_x[i],y=slice_y[i];
+        /* The opening spark teaches collection; the remaining two are unlocked
+           only after the villager has formally started the mission. */
+        if(i>0&&!slice_talked)continue;
         if(hit(px,py,12,18,x-12,y-14,24,28)){slice_taken[i]=1;slice_motes++;gameplay_reward(&gameplay,50);score+=50;sfx(0x2400);slice_notice=80;}
     }
-    /* The villager is now a real mission step: after finding the first spark,
-       Cross starts the request and the sentinel cannot be fought before it. */
-    if(!slice_talked&&slice_motes>=1&&hit(px,py,12,18,252,148,54,52)&&pressed(n,PAD_CROSS)){
+    /* Same gameplay coordinates as the 3D villager rendered at wx(205),wz(160). */
+    if(!slice_talked&&slice_motes>=1&&hit(px,py,12,18,185,136,44,48)&&pressed(n,PAD_CROSS)){
         slice_talked=1;score+=75;gameplay_reward(&gameplay,30);sfx(0x2400);slice_notice=100;
     }
-    if(slice_talked&&slice_motes==3&&slice_enemy_hp>0&&hit(px,py,12,18,ex-18,158,36,44)){
+    /* Same gameplay coordinates as the 3D Shadow Boar rendered at wx(258),wz(168). */
+    if(slice_talked&&slice_motes==3&&slice_enemy_hp>0&&hit(px,py,12,18,ex-22,144,44,50)){
         if(pressed(n,PAD_CIRCLE)){slice_enemy_hp--;score+=100;sfx(0x2400);slice_notice=55;if(px<ex)px-=8;else px+=8;}
         else if((moko_z-moko_floor_z)<90)hurt();
     }
-    if(slice_talked&&slice_enemy_hp<=0&&px>592){slice_clear=1;score+=500;sfx(0x2400);slice_notice=180;}
+    /* The gate geometry is centred around world X 902, which maps back to
+       gameplay X ~=385 through wx(px)=(px-160)*4. Completion now happens there. */
+    if(slice_talked&&slice_enemy_hp<=0&&hit(px,py,12,18,365,108,56,78)){
+        slice_clear=1;score+=500;sfx(0x2400);slice_notice=180;
+    }
     if(slice_notice>0)slice_notice--;
 }
 static void slice_hud(void){
@@ -54,7 +60,7 @@ static void slice_hud(void){
     else if(!slice_talked)FntPrint(font_id,"\nVILLAGER AHEAD   CROSS: TALK");
     else if(slice_motes<3)FntPrint(font_id,"\nRECOVER TIME SPLINTERS  %d/3",slice_motes);
     else if(slice_enemy_hp>0)FntPrint(font_id,"\nSHADOW BOAR  HP %d   CIRCLE: TAIL",slice_enemy_hp);
-    else FntPrint(font_id,"\nREACH THE GREEN DAWN GATE");
+    else FntPrint(font_id,"\nPASS THROUGH THE DAWN GATE");
 }
 '''
 src=src.replace(anchor,block+'\n'+anchor,1)
@@ -71,5 +77,5 @@ else:
     needle3='FntFlush(font_id);\n}\nstatic void draw_journal'
     if needle3 not in src: raise SystemExit('vertical slice: hud flush anchor missing')
     src=src.replace(needle3,'slice_hud();FntFlush(font_id);\n}\nstatic void draw_journal',1)
-src+='\n/* ONE MINUTE SLICE REV 288 */\n'
+src+='\n/* ONE MINUTE SLICE REV 296 / COHERENT XYZ MISSION COLLISIONS */\n'
 pathlib.Path(sys.argv[2]).write_text(src)
