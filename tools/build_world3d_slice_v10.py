@@ -1,4 +1,4 @@
-import pathlib,re,sys
+import pathlib,re,sys,subprocess
 src=pathlib.Path(sys.argv[1]).read_text()
 if 'VILLAGE 3D V9 REV 297' not in src:
     raise SystemExit('Village v9 marker missing')
@@ -48,4 +48,5 @@ if needle not in src: raise SystemExit('rev299 village-life anchor missing')
 src=src.replace(needle,needle+'playable_area_frame_v10(ot,pk,motes,enemy_hp,clear,tick);',1)
 
 src+='\n/* REV299 PLAYABLE AREA RENDER CONTRACT: SPLINTERS 112/244/285 BOAR 320 GATE 385 */\n'
-pathlib.Path(sys.argv[2]).write_text(src)
+out=pathlib.Path(sys.argv[2]);out.write_text(src)
+subprocess.check_call([sys.executable,str(pathlib.Path(__file__).with_name('build_world3d_slice_v11.py')),str(out),str(out)])
