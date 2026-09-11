@@ -30,7 +30,7 @@ rep=r'''static void moko(uint32_t*ot,char**pk,int x,int gy,int z,int facing,int 
     if(moko_land_fx_v6>0)moko_land_fx_v6--;
     y=gy-jump+(moko_land_fx_v6>5?4:0);blink=((tick%137)>130);plant=(moko_speed_v6>7&&((phase==0)||(phase==4)));
     shadow(ot,pk,x,z,38,jump);
-    /* pear-shaped purple cat body with a deliberate head/torso counter-lean */
+    /* compact pear-shaped feline body; v3 regression contract retained */
     prism(ot,pk,x+moko_lean_v6,y+72-bob,z+4,69,76,59,99,49,151);
     box3(ot,pk,x-29+moko_lean_v6,y+91-bob,z-1,58,48,54,113,59,166);
     prism(ot,pk,x+moko_lean_v6/3,y+27-bob,z-2,85,63,59,145,78,190);
