@@ -50,3 +50,4 @@ src=src.replace(needle,needle+'playable_area_frame_v10(ot,pk,motes,enemy_hp,clea
 src+='\n/* REV299 PLAYABLE AREA RENDER CONTRACT: SPLINTERS 112/244/285 BOAR 320 GATE 385 */\n'
 out=pathlib.Path(sys.argv[2]);out.write_text(src)
 subprocess.check_call([sys.executable,str(pathlib.Path(__file__).with_name('build_world3d_slice_v11.py')),str(out),str(out)])
+subprocess.check_call([sys.executable,str(pathlib.Path(__file__).with_name('build_world3d_slice_v12.py')),str(out),str(out)])
