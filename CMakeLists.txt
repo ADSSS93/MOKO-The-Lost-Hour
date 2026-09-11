@@ -14,7 +14,7 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(MOKO_GENERATED_DIR "${PROJECT_BINARY_DIR}/generated")
 set(MOKO_OBJ_CONVERTER "${PROJECT_SOURCE_DIR}/tools/obj_to_header.py")
-set(MOKO_MODEL_H "${MOKO_GENERATED_DIR}/moko_model.h")
+set(MOKO_MODEL_H "${MOKO_GENERATED_DIR}/moko_generated.h")
 set(MOKO_VILLAGE_H "${MOKO_GENERATED_DIR}/village_model.h")
 set(MOKO_CLOCKMAKER_H "${MOKO_GENERATED_DIR}/clockmaker_model.h")
 set(MOKO_BOAR_H "${MOKO_GENERATED_DIR}/boar_model.h")
