@@ -3,95 +3,74 @@ project(moko LANGUAGES C ASM)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
+# CLEAN VERTICAL SLICE BUILD
+# --------------------------
+# The previous build generated the runtime by applying a long sequence of text
+# injection scripts to src/main.c/world3d_v2.c. That made visual changes fragile
+# and kept legacy primitive presentation alive. The clean slice instead compiles
+# one explicit runtime and generates compact PS1 mesh tables directly from OBJ
+# authoring assets. This follows the asset/runtime separation used by practical
+# PS1 projects while keeping every MOKO model and level original.
+
 set(MOKO_GENERATED_DIR "${PROJECT_BINARY_DIR}/generated")
-set(MOKO_GENERATED_VISUAL_BASE "${MOKO_GENERATED_DIR}/main_visual_base.c")
-set(MOKO_GENERATED_ENEMY_BASE "${MOKO_GENERATED_DIR}/main_enemy_base.c")
-set(MOKO_GENERATED_SAVE_BASE "${MOKO_GENERATED_DIR}/main_save_base.c")
-set(MOKO_GENERATED_MISSION_BASE "${MOKO_GENERATED_DIR}/main_mission_base.c")
-set(MOKO_GENERATED_DELIVERY_BASE "${MOKO_GENERATED_DIR}/main_delivery_base.c")
-set(MOKO_GENERATED_COMBAT_BASE "${MOKO_GENERATED_DIR}/main_combat_base.c")
-set(MOKO_GENERATED_ENCOUNTER_BASE "${MOKO_GENERATED_DIR}/main_encounter_base.c")
-set(MOKO_GENERATED_GUARD_BASE "${MOKO_GENERATED_DIR}/main_guard_base.c")
-set(MOKO_GENERATED_CLOCK_BASE "${MOKO_GENERATED_DIR}/main_clock_base.c")
-set(MOKO_GENERATED_SENTINEL_BASE "${MOKO_GENERATED_DIR}/main_sentinel_base.c")
-set(MOKO_GENERATED_WARDEN_BASE "${MOKO_GENERATED_DIR}/main_warden_base.c")
-set(MOKO_GENERATED_REWIND_BASE "${MOKO_GENERATED_DIR}/main_rewind_base.c")
-set(MOKO_GENERATED_PICKUP_BASE "${MOKO_GENERATED_DIR}/main_pickup_base.c")
-set(MOKO_GENERATED_STORY_BASE "${MOKO_GENERATED_DIR}/main_story_base.c")
-set(MOKO_GENERATED_AUDIO_BASE "${MOKO_GENERATED_DIR}/main_audio_base.c")
-set(MOKO_GENERATED_COMPASS_BASE "${MOKO_GENERATED_DIR}/main_compass_base.c")
-set(MOKO_GENERATED_TITLE_BASE "${MOKO_GENERATED_DIR}/main_title_base.c")
-set(MOKO_GENERATED_WORLD_FX_BASE "${MOKO_GENERATED_DIR}/main_world_fx_base.c")
-set(MOKO_GENERATED_FEEL_BASE "${MOKO_GENERATED_DIR}/main_feel_base.c")
-set(MOKO_GENERATED_PLATFORM_BASE "${MOKO_GENERATED_DIR}/main_platform_base.c")
-set(MOKO_GENERATED_CAMERA_BASE "${MOKO_GENERATED_DIR}/main_camera_base.c")
-set(MOKO_GENERATED_STATION_BASE "${MOKO_GENERATED_DIR}/main_station_base.c")
-set(MOKO_GENERATED_STREET_BASE "${MOKO_GENERATED_DIR}/main_street_base.c")
-set(MOKO_GENERATED_HOUSE_BASE "${MOKO_GENERATED_DIR}/main_house_base.c")
-set(MOKO_GENERATED_CLOCKWORKS_BASE "${MOKO_GENERATED_DIR}/main_clockworks_base.c")
-set(MOKO_GENERATED_MAIN "${MOKO_GENERATED_DIR}/main_visual.c")
-set(MOKO_GENERATED_WORLD3D_V3 "${MOKO_GENERATED_DIR}/world3d_slice_v3_base.c")
-set(MOKO_GENERATED_WORLD3D "${MOKO_GENERATED_DIR}/world3d_slice_v3.c")
+set(MOKO_OBJ_CONVERTER "${PROJECT_SOURCE_DIR}/tools/obj_to_header.py")
+set(MOKO_MODEL_H "${MOKO_GENERATED_DIR}/moko_model.h")
+set(MOKO_VILLAGE_H "${MOKO_GENERATED_DIR}/village_model.h")
+set(MOKO_CLOCKMAKER_H "${MOKO_GENERATED_DIR}/clockmaker_model.h")
+set(MOKO_BOAR_H "${MOKO_GENERATED_DIR}/boar_model.h")
 
 add_custom_command(
-    OUTPUT "${MOKO_GENERATED_MAIN}"
+    OUTPUT "${MOKO_MODEL_H}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/src/main.c" "${MOKO_GENERATED_VISUAL_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${MOKO_GENERATED_VISUAL_BASE}" "${MOKO_GENERATED_ENEMY_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${MOKO_GENERATED_ENEMY_BASE}" "${MOKO_GENERATED_SAVE_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${MOKO_GENERATED_SAVE_BASE}" "${MOKO_GENERATED_MISSION_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${MOKO_GENERATED_MISSION_BASE}" "${MOKO_GENERATED_DELIVERY_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${MOKO_GENERATED_DELIVERY_BASE}" "${MOKO_GENERATED_COMBAT_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${MOKO_GENERATED_COMBAT_BASE}" "${MOKO_GENERATED_ENCOUNTER_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_clock_guard.py" "${MOKO_GENERATED_ENCOUNTER_BASE}" "${MOKO_GENERATED_GUARD_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_memory_clocks.py" "${MOKO_GENERATED_GUARD_BASE}" "${MOKO_GENERATED_CLOCK_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_chrono_sentinel.py" "${MOKO_GENERATED_CLOCK_BASE}" "${MOKO_GENERATED_SENTINEL_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_warden_phases.py" "${MOKO_GENERATED_SENTINEL_BASE}" "${MOKO_GENERATED_WARDEN_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_death_rewind.py" "${MOKO_GENERATED_WARDEN_BASE}" "${MOKO_GENERATED_REWIND_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_temporal_pickups.py" "${MOKO_GENERATED_REWIND_BASE}" "${MOKO_GENERATED_PICKUP_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_story_setpieces.py" "${MOKO_GENERATED_PICKUP_BASE}" "${MOKO_GENERATED_STORY_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_audio_polish.py" "${MOKO_GENERATED_STORY_BASE}" "${MOKO_GENERATED_AUDIO_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_objective_compass.py" "${MOKO_GENERATED_AUDIO_BASE}" "${MOKO_GENERATED_COMPASS_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_title_tutorial.py" "${MOKO_GENERATED_COMPASS_BASE}" "${MOKO_GENERATED_TITLE_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_runtime_world_fx.py" "${MOKO_GENERATED_TITLE_BASE}" "${MOKO_GENERATED_WORLD_FX_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_feel_overhaul.py" "${MOKO_GENERATED_WORLD_FX_BASE}" "${MOKO_GENERATED_FEEL_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_platform_controller.py" "${MOKO_GENERATED_FEEL_BASE}" "${MOKO_GENERATED_PLATFORM_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_camera_scroll.py" "${MOKO_GENERATED_PLATFORM_BASE}" "${MOKO_GENERATED_CAMERA_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_station_traversal.py" "${MOKO_GENERATED_CAMERA_BASE}" "${MOKO_GENERATED_STATION_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_backward_street.py" "${MOKO_GENERATED_STATION_BASE}" "${MOKO_GENERATED_STREET_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_forgotten_house.py" "${MOKO_GENERATED_STREET_BASE}" "${MOKO_GENERATED_HOUSE_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_clockworks_expansion.py" "${MOKO_GENERATED_HOUSE_BASE}" "${MOKO_GENERATED_CLOCKWORKS_BASE}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/inject_hour_chamber_polish.py" "${MOKO_GENERATED_CLOCKWORKS_BASE}" "${MOKO_GENERATED_MAIN}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/src/main.c" "${PROJECT_SOURCE_DIR}/tools/inject_station_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_enemy_visuals.py" "${PROJECT_SOURCE_DIR}/tools/inject_save_continue.py" "${PROJECT_SOURCE_DIR}/tools/inject_mission_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_delivery_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_combat_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_encounter_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_clock_guard.py" "${PROJECT_SOURCE_DIR}/tools/inject_memory_clocks.py" "${PROJECT_SOURCE_DIR}/tools/inject_chrono_sentinel.py" "${PROJECT_SOURCE_DIR}/tools/inject_warden_phases.py" "${PROJECT_SOURCE_DIR}/tools/inject_death_rewind.py" "${PROJECT_SOURCE_DIR}/tools/inject_temporal_pickups.py" "${PROJECT_SOURCE_DIR}/tools/inject_story_setpieces.py" "${PROJECT_SOURCE_DIR}/tools/inject_audio_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_objective_compass.py" "${PROJECT_SOURCE_DIR}/tools/inject_title_tutorial.py" "${PROJECT_SOURCE_DIR}/tools/inject_runtime_world_fx.py" "${PROJECT_SOURCE_DIR}/tools/inject_feel_overhaul.py" "${PROJECT_SOURCE_DIR}/tools/inject_platform_controller.py" "${PROJECT_SOURCE_DIR}/tools/inject_camera_scroll.py" "${PROJECT_SOURCE_DIR}/tools/inject_station_traversal.py" "${PROJECT_SOURCE_DIR}/tools/inject_backward_street.py" "${PROJECT_SOURCE_DIR}/tools/inject_forgotten_house.py" "${PROJECT_SOURCE_DIR}/tools/inject_clockworks_expansion.py" "${PROJECT_SOURCE_DIR}/tools/inject_hour_chamber_polish.py" "${PROJECT_SOURCE_DIR}/tools/inject_vertical_slice.py" "${PROJECT_SOURCE_DIR}/tools/inject_ps1_3d_mode.py" "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${PROJECT_SOURCE_DIR}/src/world3d.h" "${PROJECT_SOURCE_DIR}/src/save.h"
+    COMMAND ${Python3_EXECUTABLE} "${MOKO_OBJ_CONVERTER}"
+            "${PROJECT_SOURCE_DIR}/assets/models/moko_lowpoly.obj"
+            "${MOKO_MODEL_H}" moko
+    DEPENDS "${MOKO_OBJ_CONVERTER}" "${PROJECT_SOURCE_DIR}/assets/models/moko_lowpoly.obj"
     VERBATIM
 )
 
 add_custom_command(
-    OUTPUT "${MOKO_GENERATED_WORLD3D}"
+    OUTPUT "${MOKO_VILLAGE_H}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v3.py" "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${MOKO_GENERATED_WORLD3D_V3}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v4.py" "${MOKO_GENERATED_WORLD3D_V3}" "${MOKO_GENERATED_WORLD3D}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v3.py" "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v4.py" "${PROJECT_SOURCE_DIR}/src/world3d.h"
+    COMMAND ${Python3_EXECUTABLE} "${MOKO_OBJ_CONVERTER}"
+            "${PROJECT_SOURCE_DIR}/assets/models/village_dawn_slice.obj"
+            "${MOKO_VILLAGE_H}" village
+    DEPENDS "${MOKO_OBJ_CONVERTER}" "${PROJECT_SOURCE_DIR}/assets/models/village_dawn_slice.obj"
     VERBATIM
 )
 
-psn00bsdk_add_executable(moko GPREL "${MOKO_GENERATED_MAIN}" "${MOKO_GENERATED_WORLD3D}" src/moko_sprite.c src/gameplay.c src/audio.c src/finale.c src/save.c src/memcard.c src/quests.c src/world_events.c src/adventure.c src/level_data.c src/items.c src/journal.c src/ambient.c src/npc.c src/enemies.c src/world_runtime.c src/intro.c src/station_visuals.c)
-target_include_directories(moko PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
-
-set(MOKO_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
-set(MOKO_TEXTURE_DIR "${MOKO_ASSET_DIR}/textures")
-set(MOKO_AUDIO_DIR "${MOKO_ASSET_DIR}/audio")
-
-set(MOKO_TIM "${MOKO_GENERATED_DIR}/moko.tim")
 add_custom_command(
-    OUTPUT "${MOKO_TIM}"
+    OUTPUT "${MOKO_CLOCKMAKER_H}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/generate_moko_tim.py" "${MOKO_TIM}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/tools/generate_moko_tim.py"
+    COMMAND ${Python3_EXECUTABLE} "${MOKO_OBJ_CONVERTER}"
+            "${PROJECT_SOURCE_DIR}/assets/models/clockmaker.obj"
+            "${MOKO_CLOCKMAKER_H}" clockmaker
+    DEPENDS "${MOKO_OBJ_CONVERTER}" "${PROJECT_SOURCE_DIR}/assets/models/clockmaker.obj"
     VERBATIM
 )
-add_custom_target(moko_assets DEPENDS "${MOKO_TIM}")
-add_dependencies(moko moko_assets)
-psn00bsdk_target_incbin(moko PRIVATE moko_tim "${MOKO_TIM}")
+
+add_custom_command(
+    OUTPUT "${MOKO_BOAR_H}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
+    COMMAND ${Python3_EXECUTABLE} "${MOKO_OBJ_CONVERTER}"
+            "${PROJECT_SOURCE_DIR}/assets/models/shadow_boar.obj"
+            "${MOKO_BOAR_H}" boar
+    DEPENDS "${MOKO_OBJ_CONVERTER}" "${PROJECT_SOURCE_DIR}/assets/models/shadow_boar.obj"
+    VERBATIM
+)
+
+add_custom_target(moko_models DEPENDS
+    "${MOKO_MODEL_H}"
+    "${MOKO_VILLAGE_H}"
+    "${MOKO_CLOCKMAKER_H}"
+    "${MOKO_BOAR_H}"
+)
+
+psn00bsdk_add_executable(moko GPREL src/clean_vertical_slice.c)
+target_include_directories(moko PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${MOKO_GENERATED_DIR}"
+)
+add_dependencies(moko moko_models)
 
 psn00bsdk_add_cd_image(moko_cd MOKO iso.xml DEPENDS moko)
