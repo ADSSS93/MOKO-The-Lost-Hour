@@ -30,6 +30,7 @@ set(MOKO_GENERATED_STREET_BASE "${MOKO_GENERATED_DIR}/main_street_base.c")
 set(MOKO_GENERATED_HOUSE_BASE "${MOKO_GENERATED_DIR}/main_house_base.c")
 set(MOKO_GENERATED_CLOCKWORKS_BASE "${MOKO_GENERATED_DIR}/main_clockworks_base.c")
 set(MOKO_GENERATED_MAIN "${MOKO_GENERATED_DIR}/main_visual.c")
+set(MOKO_GENERATED_WORLD3D_V3 "${MOKO_GENERATED_DIR}/world3d_slice_v3_base.c")
 set(MOKO_GENERATED_WORLD3D "${MOKO_GENERATED_DIR}/world3d_slice_v3.c")
 
 add_custom_command(
@@ -68,8 +69,9 @@ add_custom_command(
 add_custom_command(
     OUTPUT "${MOKO_GENERATED_WORLD3D}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${MOKO_GENERATED_DIR}"
-    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v3.py" "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${MOKO_GENERATED_WORLD3D}"
-    DEPENDS "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v3.py" "${PROJECT_SOURCE_DIR}/src/world3d.h"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v3.py" "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${MOKO_GENERATED_WORLD3D_V3}"
+    COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v4.py" "${MOKO_GENERATED_WORLD3D_V3}" "${MOKO_GENERATED_WORLD3D}"
+    DEPENDS "${PROJECT_SOURCE_DIR}/src/world3d_v2.c" "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v3.py" "${PROJECT_SOURCE_DIR}/tools/build_world3d_slice_v4.py" "${PROJECT_SOURCE_DIR}/src/world3d.h"
     VERBATIM
 )
 
