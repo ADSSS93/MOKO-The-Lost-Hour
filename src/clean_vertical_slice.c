@@ -283,10 +283,18 @@ static void update_game(void){
     }
     if(attack_timer>0)attack_timer--;
 
-    if(!talked_clockmaker && absi(player_x+105)<75 && absi(player_z-1210)<90 && pressed(now,PAD_CIRCLE)) talked_clockmaker=1;
+    /* The vertical slice order is deliberate: first discover a fragment,
+       then meet the Clockmaker, then recover the remaining two. */
+    if(!splinter_taken[0] && absi(player_x-splinter_x[0])<38 && absi(player_z-splinter_z[0])<44){
+        splinter_taken[0]=1;
+        splinters=1;
+    }
+    if(splinter_taken[0] && !talked_clockmaker && absi(player_x+105)<82 && absi(player_z-1210)<98){
+        talked_clockmaker=1;
+    }
     if(talked_clockmaker){
         int i;
-        for(i=0;i<3;i++) if(!splinter_taken[i] && absi(player_x-splinter_x[i])<34 && absi(player_z-splinter_z[i])<38){
+        for(i=1;i<3;i++) if(!splinter_taken[i] && absi(player_x-splinter_x[i])<38 && absi(player_z-splinter_z[i])<44){
             splinter_taken[i]=1;
             splinters++;
         }
@@ -320,8 +328,9 @@ static void draw_scene(void){
     draw_mesh(village_v,village_f,VILLAGE_FACES,0,0,0,0,0,0);
     draw_mesh(moko_v,moko_f,MOKO_FACES,player_x,8-jump_h,player_z,!facing,1,moko_anim);
     draw_mesh(clockmaker_v,clockmaker_f,CLOCKMAKER_FACES,-105,3,1210,0,2,0);
+    if(!splinter_taken[0]) draw_crystal(splinter_x[0],126,splinter_z[0],tick/6);
     if(talked_clockmaker){
-        for(i=0;i<3;i++) if(!splinter_taken[i]) draw_crystal(splinter_x[i],126,splinter_z[i],tick/6+i);
+        for(i=1;i<3;i++) if(!splinter_taken[i]) draw_crystal(splinter_x[i],126,splinter_z[i],tick/6+i);
     }
     if(splinters==3 && boar_hp>0){
         int bob=((tick/6)&1)*3;
@@ -337,8 +346,9 @@ static void draw_scene(void){
 
 static void draw_ui(void){
     if(area_clear) FntPrint(font_id,"VILLAGE OF DAWN   AREA CLEAR\nDawn Gate restored");
-    else if(!talked_clockmaker) FntPrint(font_id,"VILLAGE OF DAWN   HP 3\nFind the Clockmaker - O interact");
-    else if(splinters<3) FntPrint(font_id,"TIME SPLINTERS %d/3\nRecover the blue fragments",splinters);
+    else if(!splinter_taken[0]) FntPrint(font_id,"VILLAGE OF DAWN   HP 3\nFind the first Time Splinter");
+    else if(!talked_clockmaker) FntPrint(font_id,"TIME SPLINTERS 1/3\nBring it to the Clockmaker");
+    else if(splinters<3) FntPrint(font_id,"TIME SPLINTERS %d/3\nRecover the remaining fragments",splinters);
     else if(boar_hp>0) FntPrint(font_id,"SHADOW BOAR  HP %d\nSquare: tail strike",boar_hp);
     else FntPrint(font_id,"DAWN GATE OPEN\nWalk through the arch");
 }
