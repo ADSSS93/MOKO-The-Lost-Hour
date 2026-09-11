@@ -74,6 +74,8 @@ pat = re.compile(r'static void tutorial_art\(void\)\{.*?\}\nstatic int warden_ph
 if pat.search(src):
     tutorial = r'''static void tutorial_art(void){
     int step=-1;
+    /* Village has its own world-space guidance/HUD; never draw the legacy panel here. */
+    if(room==0)return;
     if(tutorial_flags==15||room>0)return;
     if(!(tutorial_flags&1))step=0;else if(!(tutorial_flags&2))step=1;else if(!(tutorial_flags&4))step=2;else if(!(tutorial_flags&8))step=3;
     if(step<0)return;
@@ -85,5 +87,5 @@ if pat.search(src):
 }'''
     src = pat.sub(lambda _m: tutorial + '\nstatic int warden_phase_level', src, count=1)
 
-src += '\n/* COMMERCIAL VISUAL REV 283: compact HUD + rebuilt Silent Station */\n'
+src += '\n/* COMMERCIAL VISUAL REV 306: compact HUD + Village tutorial panel removed */\n'
 pathlib.Path(sys.argv[2]).write_text(src)
