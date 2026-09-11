@@ -96,8 +96,8 @@ static void frame_begin(void){
     trans.vy=0;
     trans.vz=-cam_z;
     TransMatrix(&view,&trans);
-    SetRotMatrix(&view);
-    SetTransMatrix(&view);
+    gte_SetRotMatrix(&view);
+    gte_SetTransMatrix(&view);
 }
 
 static void frame_end(void){
@@ -117,7 +117,6 @@ static void frame_end(void){
 
 static void face_color(int kind,int face,int *r,int *g,int *b){
     if(kind==0){
-        /* Village: sand lane, warm plaster, wine roofs, cool stone tower. */
         if(face<6){*r=150+(face&1)*10;*g=116+(face&1)*6;*b=76;return;}
         if((face>=14&&face<18)||(face>=26&&face<30)||(face>=36&&face<40)||(face>=46&&face<50)||face>=64){
             *r=105+(face&1)*15;*g=51;*b=82+(face&2)*8;return;
@@ -126,7 +125,6 @@ static void face_color(int kind,int face,int *r,int *g,int *b){
         *r=126+(face%3)*9;*g=94+(face%2)*8;*b=76+(face%4)*4;return;
     }
     if(kind==1){
-        /* Moko purple cat; face groups remain readable on real 320x240 output. */
         if(face<10){*r=106;*g=54;*b=156;}
         else if(face<21){*r=151;*g=81;*b=197;}
         else if(face<23){*r=92;*g=39;*b=137;}
@@ -143,7 +141,6 @@ static void face_color(int kind,int face,int *r,int *g,int *b){
         else {*r=107;*g=63;*b=91;}
         return;
     }
-    /* Shadow Boar */
     if(face<10){*r=68;*g=33;*b=94;}
     else if(face<17){*r=121;*g=52;*b=130;}
     else if(face<19){*r=224;*g=190;*b=116;}
@@ -176,7 +173,6 @@ static void draw_mesh(const MokoMeshV *v,const MokoMeshF *f,int face_count,int o
         int step=(anim==1)?(((tick/5)&3)==1?5:(((tick/5)&3)==3?-5:0)):0;
         int bob=(anim==1)?((tick/6)&1)*2:0;
         if(kind==1){
-            /* Limb motion and clock-hand tail movement without a skeletal runtime. */
             if(f[i].a>=22&&f[i].a<=29) aa.x+=(aa.x<0?-step:step);
             if(f[i].b>=22&&f[i].b<=29) bb.x+=(bb.x<0?-step:step);
             if(f[i].c>=22&&f[i].c<=29) cc.x+=(cc.x<0?-step:step);
@@ -209,16 +205,15 @@ static void draw_gate_glow(void){
 
 static void update_game(void){
     uint16_t now=buttons();
-    int moving=0;
     int speed=7;
-    if(!(now&PAD_LEFT)){player_x-=speed;facing=0;moving=1;}
-    if(!(now&PAD_RIGHT)){player_x+=speed;facing=1;moving=1;}
-    if(!(now&PAD_UP)){player_z+=speed;moving=1;}
-    if(!(now&PAD_DOWN)){player_z-=speed;moving=1;}
+    if(!(now&PAD_LEFT)){player_x-=speed;facing=0;}
+    if(!(now&PAD_RIGHT)){player_x+=speed;facing=1;}
+    if(!(now&PAD_UP)) player_z+=speed;
+    if(!(now&PAD_DOWN)) player_z-=speed;
     player_x=clampi(player_x,-245,245);
     player_z=clampi(player_z,865,1775);
 
-    if(pressed(now,PAD_CROSS)&&jump_h==0){jump_v=18;}
+    if(pressed(now,PAD_CROSS)&&jump_h==0) jump_v=18;
     if(jump_v||jump_h){
         jump_h+=jump_v;
         jump_v-=2;
@@ -227,9 +222,7 @@ static void update_game(void){
     if(pressed(now,PAD_SQUARE))attack_timer=12;
     if(attack_timer>0)attack_timer--;
 
-    if(!talked_clockmaker && absi(player_x+105)<75 && absi(player_z-1210)<90 && pressed(now,PAD_CIRCLE)){
-        talked_clockmaker=1;
-    }
+    if(!talked_clockmaker && absi(player_x+105)<75 && absi(player_z-1210)<90 && pressed(now,PAD_CIRCLE)) talked_clockmaker=1;
     if(talked_clockmaker){
         int i;
         for(i=0;i<3;i++) if(!splinter_taken[i] && absi(player_x-splinter_x[i])<34 && absi(player_z-splinter_z[i])<38){
@@ -249,7 +242,6 @@ static void update_game(void){
         cam_z+=(target_z-cam_z)/12;
     }
     old_btn=now;
-    (void)moving;
 }
 
 static void draw_scene(void){
@@ -257,7 +249,6 @@ static void draw_scene(void){
     draw_mesh(village_v,village_f,VILLAGE_FACES,0,0,0,0,0,0);
     draw_mesh(moko_v,moko_f,MOKO_FACES,player_x,8-jump_h,player_z,!facing,1,1);
     draw_mesh(clockmaker_v,clockmaker_f,CLOCKMAKER_FACES,-105,3,1210,0,2,0);
-
     if(talked_clockmaker){
         for(i=0;i<3;i++) if(!splinter_taken[i]) draw_crystal(splinter_x[i],126,splinter_z[i],tick/6+i);
     }
@@ -266,7 +257,6 @@ static void draw_scene(void){
         draw_mesh(boar_v,boar_f,BOAR_FACES,95,5-bob,1700,(tick/40)&1,3,0);
     }
     draw_gate_glow();
-
     if(attack_timer>0){
         int tx=player_x+(facing?65:-65);
         int tz=player_z+10;
@@ -275,17 +265,11 @@ static void draw_scene(void){
 }
 
 static void draw_ui(void){
-    if(area_clear){
-        FntPrint(font_id,"VILLAGE OF DAWN   AREA CLEAR\nDawn Gate restored");
-    }else if(!talked_clockmaker){
-        FntPrint(font_id,"VILLAGE OF DAWN   HP 3\nFind the Clockmaker - O interact");
-    }else if(splinters<3){
-        FntPrint(font_id,"TIME SPLINTERS %d/3\nRecover the blue fragments",splinters);
-    }else if(boar_hp>0){
-        FntPrint(font_id,"SHADOW BOAR  HP %d\nSquare: tail strike",boar_hp);
-    }else{
-        FntPrint(font_id,"DAWN GATE OPEN\nWalk through the arch");
-    }
+    if(area_clear) FntPrint(font_id,"VILLAGE OF DAWN   AREA CLEAR\nDawn Gate restored");
+    else if(!talked_clockmaker) FntPrint(font_id,"VILLAGE OF DAWN   HP 3\nFind the Clockmaker - O interact");
+    else if(splinters<3) FntPrint(font_id,"TIME SPLINTERS %d/3\nRecover the blue fragments",splinters);
+    else if(boar_hp>0) FntPrint(font_id,"SHADOW BOAR  HP %d\nSquare: tail strike",boar_hp);
+    else FntPrint(font_id,"DAWN GATE OPEN\nWalk through the arch");
 }
 
 int main(void){
