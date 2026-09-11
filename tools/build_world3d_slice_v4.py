@@ -1,7 +1,7 @@
 import pathlib,re,sys
 src=pathlib.Path(sys.argv[1]).read_text()
 if 'VILLAGE 3D V3 REV 291' not in src: raise SystemExit('Village v3 marker missing')
-src=src.replace('VILLAGE 3D V3 REV 291','VILLAGE 3D V4 REV 292',1)
+src=src.replace('VILLAGE 3D V3 REV 291','VILLAGE 3D V4 REV 292 / VILLAGE 3D V3 REV 291',1)
 
 # Per-vertex colour is the cheapest PS1-era way to remove the flat tech-demo look
 # without introducing borrowed textures/assets. Geometry remains true XYZ/GTE.
