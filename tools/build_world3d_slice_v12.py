@@ -2,86 +2,104 @@ import pathlib,re,sys
 src=pathlib.Path(sys.argv[1]).read_text()
 if 'VILLAGE 3D V13 REV 303' not in src:
     raise SystemExit('Village v13 marker missing')
-src=src.replace('VILLAGE 3D V13 REV 303','VILLAGE 3D V19 REV 309 / VILLAGE 3D V18 REV 308 / VILLAGE 3D V17 REV 307 / VILLAGE 3D V16 REV 306 / VILLAGE 3D V15 REV 305 / VILLAGE 3D V14 REV 304 / VILLAGE 3D V13 REV 303',1)
+src=src.replace('VILLAGE 3D V13 REV 303','VILLAGE 3D V20 REV 310 / VILLAGE 3D V13 REV 303',1)
 
+# REV310 is a structural presentation reset.  The previous passes kept stacking
+# foreground solids into the camera and scaling Moko up.  This pass instead
+# authors a readable Tombi-style 2.5D lane: play space in the middle, scenery
+# pushed to the sides/back, and a compact protagonist occupying a modest amount
+# of the 320x240 frame.
 road_pat=re.compile(r'static void road\(uint32_t\*ot,char\*\*pk\)\{.*?\}\nstatic void awning',re.S)
 road_rep=r'''static void road(uint32_t*ot,char**pk){
     int i;
-    quad3g(ot,pk,7,(V3){-1500,188,760},(V3){1500,188,760},(V3){1320,188,1040},(V3){-1320,188,1040},55,53,55,80,67,58);
-    quad3g(ot,pk,7,(V3){-1320,188,1044},(V3){1320,188,1044},(V3){1040,188,1510},(V3){-1040,188,1510},80,67,58,109,87,64);
-    quad3g(ot,pk,7,(V3){-1040,188,1514},(V3){1040,188,1514},(V3){900,188,1890},(V3){-900,188,1890},109,87,64,125,99,70);
+    /* broad ground field first, then a six-segment warm stone gameplay lane */
+    quad3g(ot,pk,7,(V3){-1500,188,760},(V3){1500,188,760},(V3){1120,188,1900},(V3){-1120,188,1900},55,67,63,86,91,73);
     for(i=0;i<6;i++){
-        int z0=850+i*155,z1=z0+118,shift=(i-2)*15;
-        quad3g(ot,pk,6,(V3){-390+shift,183,z0},(V3){390+shift,183,z0},(V3){350+shift,183,z1},(V3){-350+shift,183,z1},115+(i&1)*10,92+(i&1)*8,67,147+(i&1)*8,116+(i&1)*6,75);
+        int z0=820+i*165,z1=z0+168;
+        int c0=(i<2?-42:(i<4?0:36)),c1=(i<1?-42:(i<3?-12:(i<5?24:46)));
+        int w0=330-i*12,w1=322-i*12;
+        quad3g(ot,pk,6,(V3){c0-w0,182,z0},(V3){c0+w0,182,z0},(V3){c1+w1,182,z1},(V3){c1-w1,182,z1},
+               139+(i&1)*8,112+(i&1)*6,79,169+(i&1)*6,136+(i&1)*5,88);
     }
+    /* darker verge gives the lane a strong silhouette without near-plane props */
+    quad3g(ot,pk,6,(V3){-620,185,820},(V3){-345,185,820},(V3){-275,185,1810},(V3){-820,185,1810},65,73,60,82,88,66);
+    quad3g(ot,pk,6,(V3){345,185,820},(V3){620,185,820},(V3){820,185,1810},(V3){275,185,1810},65,73,60,82,88,66);
 }
 static void awning'''
 src,n=road_pat.subn(road_rep,src,count=1)
-if n!=1: raise SystemExit('rev309 safe road replacement failed')
+if n!=1: raise SystemExit('rev310 road replacement failed')
 
-# Match whole function through the next known function declaration; do not parse
-# braces because V3 compound literals contain many braces themselves.
+# Delete all near-camera foreground decoration.  Foreground needs to be supplied
+# only by the ground plane until proper clipping is implemented.
 pat=re.compile(r'static void commercial_foreground_v13\(uint32_t\*ot,char\*\*pk,int tick\)\{.*?\nstatic void playable_area_frame_v10',re.S)
-replacement=r'''static void commercial_foreground_v13(uint32_t*ot,char**pk,int tick){
-    (void)tick;
-    quad3g(ot,pk,7,(V3){-1480,188,770},(V3){1480,188,770},(V3){1220,188,960},(V3){-1220,188,960},57,54,55,82,68,59);
-    quad3g(ot,pk,6,(V3){-440,184,775},(V3){440,184,775},(V3){355,184,1115},(V3){-355,184,1115},119,98,70,162,129,79);
-}
+replacement=r'''static void commercial_foreground_v13(uint32_t*ot,char**pk,int tick){(void)ot;(void)pk;(void)tick;}
 static void playable_area_frame_v10'''
 src,n=pat.subn(replacement,src,count=1)
-if n!=1: raise SystemExit('rev309 foreground replacement failed')
-src=src.replace('foreground_frame(ot,pk,tick);','/* REV309 old foreground disabled */')
-src=src.replace('tree(ot,pk,-1120,900);','/* REV309 near-left tree removed */')
-src=src.replace('tree(ot,pk,1120,945);','/* REV309 near-right tree removed */')
+if n!=1: raise SystemExit('rev310 foreground replacement failed')
+src=src.replace('foreground_frame(ot,pk,tick);','/* REV310 old silhouette foreground disabled */')
 
+# Replace the accumulated commercial-village helper with a deliberately staged
+# street.  Buildings form left/right walls; the centre remains readable for
+# Moko, the Clockmaker, Splinters, Boar and Dawn Gate.
 anchor='static void playable_area_frame_v10(uint32_t*ot,char**pk,int motes,int enemy_hp,int clear,int tick){'
-if anchor not in src: raise SystemExit('rev309 playable-area anchor missing')
-helper=r'''static void commercial_village_v19(uint32_t*ot,char**pk,int tick){
-    int i,p=(tick/10)&3;
-    for(i=0;i<4;i++){
-        int z=1160+i*120;
-        box3(ot,pk,-492,158,z,18,30,22,89,68,55);
-        box3(ot,pk,474,158,z,18,30,22,89,68,55);
-        prism(ot,pk,-483,136-(i&1)*3,z,25,20,18,226,165,78);
-        prism(ot,pk,483,136-((i+1)&1)*3,z,25,20,18,226,165,78);
-    }
-    awning(ot,pk,-760,1260,215,126,77,65);
-    awning(ot,pk,545,1255,215,73,96,118);
-    house(ot,pk,-1050,1430,285,245,117,92,77);
-    house(ot,pk,735,1440,300,252,126,98,82);
-    quad3g(ot,pk,6,(V3){-510,181,1210},(V3){510,181,1210},(V3){440,181,1515},(V3){-440,181,1515},112,92,72,145,117,82);
-    for(i=0;i<4;i++){int x=-330+i*220;box3(ot,pk,x,175,1335+(i&1)*30,138,8,60,160,132,91);}
-    arch(ot,pk,-155,1545,310);tower(ot,pk,74,1710);
-    foliage(ot,pk,-650,1360,tick+9);foliage(ot,pk,640,1375,tick+17);
-    foliage(ot,pk,-390,1535,tick+23);foliage(ot,pk,395,1553,tick+31);
+if anchor not in src: raise SystemExit('rev310 playable-area anchor missing')
+helper=r'''static void commercial_village_v20(uint32_t*ot,char**pk,int tick){
+    int i,p=(tick/12)&3;
+    /* near/mid left facade rhythm */
+    house(ot,pk,-1180,1280,300,245,121,91,76);
+    awning(ot,pk,-865,1260,210,138,82,62);
+    house(ot,pk,-1120,1540,330,275,111,88,80);
+    foliage(ot,pk,-720,1405,tick+7);
+    lamp(ot,pk,-520,1320,tick);
+    /* near/mid right facade rhythm */
+    house(ot,pk,880,1295,305,250,126,96,80);
+    awning(ot,pk,620,1268,210,78,105,125);
+    house(ot,pk,820,1550,335,278,119,91,83);
+    foliage(ot,pk,690,1430,tick+17);
+    lamp(ot,pk,510,1340,tick+5);
+    /* far focal point: arch + clock tower gives the lane a destination */
+    arch(ot,pk,-145,1635,330);
+    tower(ot,pk,88,1775);
+    /* low market clutter only at the sides, never across the playable centre */
     for(i=0;i<3;i++){
-        int x=-250+i*250;
-        box3(ot,pk,x-3,71,1545,6,94,8,82,57,48);
-        prism(ot,pk,x,82+p,1537,42,31,10,126+i*28,72,151-i*18);
-        prism(ot,pk,x,123,1531,26,28,10,218,174,84);
+        int z=1190+i*170;
+        box3(ot,pk,-505,164,z,42,22,34,102,78,58);
+        box3(ot,pk,463,164,z+35,42,22,34,104,79,59);
+        prism(ot,pk,-484,145-p,z-4,26,19,20,220,158,75);
+        prism(ot,pk,484,145-((p+1)&3),z+31,26,19,20,220,158,75);
     }
 }'''
+# Remove any previous helper(s) bearing this family of names, then insert one source of truth.
+src=re.sub(r'static void commercial_village_v\d+\(uint32_t\*ot,char\*\*pk,int tick\)\{.*?\n\}', '', src, flags=re.S)
 src=src.replace(anchor,helper+'\n'+anchor,1)
-road_call='commercial_foreground_v13(ot,pk,tick);'
-if road_call not in src: raise SystemExit('rev309 foreground call missing')
-src=src.replace(road_call,road_call+'\n    commercial_village_v19(ot,pk,tick);',1)
+# Strip old calls and install exactly one staging call after foreground.
+src=re.sub(r'\n\s*commercial_village_v\d+\(ot,pk,tick\);','',src)
+fg='commercial_foreground_v13(ot,pk,tick);'
+if fg not in src: raise SystemExit('rev310 foreground call missing')
+src=src.replace(fg,fg+'\n    commercial_village_v20(ot,pk,tick);',1)
 
-src=src.replace('{-27,-72,2},{-43,-99,8},{-11,-83,4},{27,-72,2},{43,-99,8},{11,-83,4},',
-                '{-24,-67,2},{-32,-86,6},{-10,-75,4},{24,-67,2},{32,-86,6},{10,-75,4},',1)
-src=src.replace('{-29,24,-8},{-34,67,-5},{-7,72,3},{29,24,-8},{34,67,-5},{7,72,3},',
-                '{-28,24,-8},{-31,63,-5},{-7,69,3},{28,24,-8},{31,63,-5},{7,69,3},',1)
-scale_anchor='int vx=v.x,vy=v.y,vz=v.z;'
-if scale_anchor not in src: raise SystemExit('rev309 mesh scale anchor missing')
-src=src.replace(scale_anchor,scale_anchor+'vx=(vx*5)/4;vy=(vy*5)/4;vz=(vz*5)/4;',1)
+# Moko: reverse the giant-character trend.  Keep the mesh but scale it to 78%,
+# with a slightly wider head/paws so the feline silhouette survives PS1 resolution.
+mesh_world_pat=re.compile(r'static V3 moko_mesh_world\(MokoMeshV v,int x,int y,int z,int facing,int step,int bob,int jump,int tick\)\{.*?\n\}',re.S)
+mesh_world=r'''static V3 moko_mesh_world(MokoMeshV v,int x,int y,int z,int facing,int step,int bob,int jump,int tick){
+    int vx=(v.x*4)/5,vy=(v.y*4)/5,vz=(v.z*4)/5;
+    if(vy>16&&vx<0)vy+=(step*3)/4;if(vy>16&&vx>0)vy-=(step*3)/4;
+    if(vx>36)vy+=((tick/5)&3)-1;
+    if(!facing)vx=-vx;
+    return (V3){x+vx,y+92+vy-bob-jump,z+vz};
+}'''
+src,n=mesh_world_pat.subn(mesh_world,src,count=1)
+if n!=1: raise SystemExit('rev310 Moko mesh transform missing')
+# Eyes/nose are redrawn closer to the scaled mesh.
+src=re.sub(r'\n\s*tri3\(ot,pk,1,\(V3\)\{x-\d+,gy\+\d+-bob-jump,z-\d+\}.*?;\n\s*tri3\(ot,pk,1,\(V3\)\{x\+\d+,gy\+\d+-bob-jump,z-\d+\}.*?;',
+           '\n    tri3(ot,pk,1,(V3){x-12,gy+65-bob-jump,z-31},(V3){x-4,gy+65-bob-jump,z-32},(V3){x-8,gy+72-bob-jump,z-33},242,237,248);\n    tri3(ot,pk,1,(V3){x+4,gy+65-bob-jump,z-32},(V3){x+12,gy+65-bob-jump,z-31},(V3){x+8,gy+72-bob-jump,z-33},242,237,248);\n    tri3(ot,pk,1,(V3){x-4,gy+75-bob-jump,z-35},(V3){x+4,gy+75-bob-jump,z-35},(V3){x,gy+81-bob-jump,z-37},231,102,145);',
+           src,count=1,flags=re.S)
 
-old='''tri3(ot,pk,1,(V3){x-13,gy+76-bob-jump,z-29},(V3){x-5,gy+76-bob-jump,z-30},(V3){x-9,gy+82-bob-jump,z-31},225,215,235);\n    tri3(ot,pk,1,(V3){x+5,gy+76-bob-jump,z-30},(V3){x+13,gy+76-bob-jump,z-29},(V3){x+9,gy+82-bob-jump,z-31},225,215,235);'''
-new='''tri3(ot,pk,1,(V3){x-16,gy+69-bob-jump,z-38},(V3){x-5,gy+69-bob-jump,z-39},(V3){x-11,gy+78-bob-jump,z-40},244,238,248);\n    tri3(ot,pk,1,(V3){x+5,gy+69-bob-jump,z-39},(V3){x+16,gy+69-bob-jump,z-38},(V3){x+11,gy+78-bob-jump,z-40},244,238,248);\n    tri3(ot,pk,1,(V3){x-5,gy+81-bob-jump,z-42},(V3){x+5,gy+81-bob-jump,z-42},(V3){x,gy+88-bob-jump,z-44},232,105,145);'''
-if old not in src: raise SystemExit('rev309 face anchor missing')
-src=src.replace(old,new,1)
+# Camera: wider and calmer, closer to the late-PS1 2.5D benchmark.  Keep Moko in
+# the lower-middle rather than filling the vertical frame.
+src=re.sub(r'gte_SetGeomOffset\(160,\d+\);gte_SetGeomScreen\(\d+\);','gte_SetGeomOffset(160,142);gte_SetGeomScreen(238);',src,count=1)
+src=re.sub(r't\.vx=-cam_follow_x;t\.vy=-?\d+;t\.vz=\d+-\(cam_follow_z-1120\)/\d+;',
+           't.vx=-cam_follow_x;t.vy=-58;t.vz=102-(cam_follow_z-1120)/20;',src,count=1)
 
-src=src.replace('gte_SetGeomOffset(160,148);gte_SetGeomScreen(260);','gte_SetGeomOffset(160,162);gte_SetGeomScreen(282);',1)
-src=src.replace('t.vx=-cam_follow_x;t.vy=-30;t.vz=126-(cam_follow_z-1120)/22;',
-                't.vx=-cam_follow_x;t.vy=-16;t.vz=150-(cam_follow_z-1120)/23;',1)
-
-src+='\n/* REV309 RUNTIME FIX: SAFE FLAT ROAD / COMPACT CAT SILHOUETTE / MODERATE CAMERA */\n'
+src+='\n/* REV310 STRUCTURAL RESET: WIDE 2.5D LANE / SIDE SCENERY / COMPACT MOKO */\n'
 pathlib.Path(sys.argv[2]).write_text(src)
