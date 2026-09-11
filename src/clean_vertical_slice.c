@@ -88,7 +88,7 @@ static void video_init(void){
     SetDispMask(1);
 
     gte_SetGeomOffset(160,103);
-    gte_SetGeomScreen(225);
+    gte_SetGeomScreen(215);
     FntLoad(960,0);
     font_id=FntOpen(10,8,300,34,0,256);
     ClearOTagR(fb[0].ot,OT_SIZE);
@@ -139,8 +139,9 @@ static void face_color(int kind,int face,int *r,int *g,int *b){
         else if(face<23){*r=92;*g=39;*b=137;}
         else if(face<31){*r=74;*g=40;*b=112;}
         else if(face<35){*r=218;*g=184;*b=205;}
-        else if(face<37){*r=211;*g=171;*b=71;}
-        else {*r=205;*g=65;*b=139;}
+        else if(face<43){*r=205;*g=65;*b=139;}
+        else if(face<45){*r=34;*g=25;*b=54;}
+        else {*r=224;*g=187;*b=73;}
         return;
     }
     if(kind==2){
@@ -163,8 +164,6 @@ static void emit_triangle(short ax,short ay,short az,short bx,short by,short bz,
     int zavg;
     int depth;
 
-    /* Reject geometry before projection when it approaches the camera plane.
-       This prevents the giant black/wedge artifacts seen in the failed Village baseline. */
     if((int)az-cam_z<72 || (int)bz-cam_z<72 || (int)cz-cam_z<72) return;
 
     zavg=((int)az+(int)bz+(int)cz)/3-cam_z;
@@ -213,6 +212,13 @@ static void animate_moko_vertex(MokoMeshV *p,int anim){
     }
 }
 
+static void scale_moko_vertex(MokoMeshV *p){
+    const int foot_y=176;
+    p->x=(p->x*2)/3;
+    p->z=(p->z*2)/3;
+    p->y=foot_y+((p->y-foot_y)*2)/3;
+}
+
 static void draw_mesh(const MokoMeshV *v,const MokoMeshF *f,int face_count,int ox,int oy,int oz,int mirror,int kind,int anim){
     int i;
     for(i=0;i<face_count;i++){
@@ -223,7 +229,10 @@ static void draw_mesh(const MokoMeshV *v,const MokoMeshF *f,int face_count,int o
             animate_moko_vertex(&aa,anim);
             animate_moko_vertex(&bb,anim);
             animate_moko_vertex(&cc,anim);
-            if(anim==MOKO_RUN) bob=((tick/4)&1)*3;
+            scale_moko_vertex(&aa);
+            scale_moko_vertex(&bb);
+            scale_moko_vertex(&cc);
+            if(anim==MOKO_RUN) bob=((tick/4)&1)*2;
             else if(anim==MOKO_IDLE) bob=((tick/18)&1);
         }
         face_color(kind,i,&r,&g,&b);
@@ -320,9 +329,9 @@ static void draw_scene(void){
     }
     draw_gate_glow();
     if(attack_timer>0){
-        int tx=player_x+(facing?73:-73);
+        int tx=player_x+(facing?52:-52);
         int tz=player_z+10;
-        emit_triangle(player_x+(facing?42:-42),94-jump_h,player_z-8,tx,80-jump_h,tz,tx,116-jump_h,tz+8,233,92,163);
+        emit_triangle(player_x+(facing?28:-28),116-jump_h,player_z-8,tx,104-jump_h,tz,tx,132-jump_h,tz+8,233,92,163);
     }
 }
 
